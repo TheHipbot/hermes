@@ -2,6 +2,15 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/alecthomas/template"
+  packages = [
+    ".",
+    "parse"
+  ]
+  revision = "a0175ee3bccc567396460bf5acd36800cb10c49c"
+
+[[projects]]
   name = "github.com/emirpasic/gods"
   packages = [
     "containers",
@@ -271,6 +280,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5ecda5b5ab2a425cec542a5a10893a1feff60c128cd2b66152a6ba3076f57ee0"
+  inputs-digest = "5fc4bc80fee2dcd2615f402727145afed202f2eb1629a657ab03e3235e43b8a0"
   solver-name = "gps-cdcl"
   solver-version = 1

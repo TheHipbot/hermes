@@ -15,10 +15,12 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 
+	"github.com/TheHipbot/hermes/fs"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -40,15 +42,22 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: hermesCmd,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("requires at least one arg")
+		}
+		return nil
+	},
+	Run: getHandler,
 }
 
-func hermesCmd(cmd *cobra.Command, args []string) {
-	if aliasFlg {
-		fmt.Print(generateAlias())
-		os.Exit(0)
-	}
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "get a new repo or goto an existing",
+	Run:   getHandler,
+}
 
+func getHandler(cmd *cobra.Command, args []string) {
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
 	repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
@@ -62,18 +71,8 @@ func hermesCmd(cmd *cobra.Command, args []string) {
 		Name: repoName,
 		URL:  repoURL,
 	}
-
 	repo.Clone(pathToRepo)
-}
-
-func generateAlias() string {
-	return `
-	function hermes() {
-		export HERMES_BIN="$(which hermes)"
-		$HERMES_BIN $@
-	}
-	
-`
+	fs.SetTarget(pathToRepo)
 }
 
 // Execute runs the root command
@@ -88,7 +87,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hermes.yaml)")
-	rootCmd.Flags().BoolVar(&aliasFlg, "alias", false, "Print the bash function to wrap the utility")
 
 	home, err := homedir.Dir()
 	if err != nil {
@@ -98,8 +96,11 @@ func init() {
 
 	viper.SetDefault("repo_path", fmt.Sprintf("%s/hermes-repos/", home))
 	viper.SetDefault("config_path", fmt.Sprintf("%s/.hermes/", home))
+	viper.SetDefault("target_name", ".hermes_target")
 
 	rootCmd.AddCommand(setupCmd)
+	rootCmd.AddCommand(aliasCmd)
+	rootCmd.AddCommand(getCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
