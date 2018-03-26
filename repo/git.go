@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"fmt"
 	"net/url"
 	"os"
 
@@ -18,7 +17,7 @@ type GitRepository struct {
 }
 
 // Clone git repository to path
-func (gr *GitRepository) Clone(path string) {
+func (gr *GitRepository) Clone(path string) error {
 	workDir := osfs.New(path)
 	dot, _ := workDir.Chroot(".git")
 	storer, err := filesystem.NewStorage(dot)
@@ -31,7 +30,7 @@ func (gr *GitRepository) Clone(path string) {
 		ReferenceName: "refs/heads/master",
 		Progress:      os.Stdout,
 	}); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }

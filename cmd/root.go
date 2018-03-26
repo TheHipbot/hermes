@@ -71,8 +71,14 @@ func getHandler(cmd *cobra.Command, args []string) {
 		Name: repoName,
 		URL:  repoURL,
 	}
-	repo.Clone(pathToRepo)
-	fs.SetTarget(pathToRepo)
+	if err := repo.Clone(pathToRepo); err != nil {
+		fmt.Printf("Error cloning repo\n%s", err)
+		os.Exit(1)
+	}
+	if err := fs.SetTarget(pathToRepo); err != nil {
+		fmt.Printf("Error creating target file\n%s", err)
+		os.Exit(1)
+	}
 }
 
 // Execute runs the root command

@@ -15,7 +15,12 @@ var aliasCmd = &cobra.Command{
 	Use:   "alias",
 	Short: "Outputs shell function for hermes alias",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Print(generateAlias())
+		alias, err := generateAlias()
+		if err != nil {
+			fmt.Printf("Error generating alias\n%s", err)
+			os.Exit(1)
+		}
+		fmt.Print(alias)
 		os.Exit(0)
 	},
 }
@@ -27,7 +32,7 @@ type AliasData struct {
 	TargetFileName string
 }
 
-func generateAlias() string {
+func generateAlias() (string, error) {
 	var resolved bytes.Buffer
 	data := AliasData{
 		ConfigDir:      viper.GetString("config_path"),
@@ -47,13 +52,12 @@ func generateAlias() string {
 
 	t, err := template.New("alias").Parse(aliasTemplate)
 	if err != nil {
-		fmt.Print("Bad template")
-		os.Exit(1)
+		return "", err
 	}
 
 	if err = t.Execute(&resolved, data); err != nil {
-		fmt.Print("Bad template")
-		os.Exit(1)
+		return "", err
 	}
-	return resolved.String()
+
+	return resolved.String(), nil
 }
