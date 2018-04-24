@@ -71,12 +71,14 @@ func getHandler(cmd *cobra.Command, args []string) {
 		Name: repoName,
 		URL:  repoURL,
 	}
+
 	if err := repo.Clone(pathToRepo); err != nil {
-		fmt.Printf("Error cloning repo\n%s", err)
+		fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
 		os.Exit(1)
 	}
+
 	if err := fs.SetTarget(pathToRepo); err != nil {
-		fmt.Printf("Error creating target file\n%s", err)
+		fmt.Printf("Error creating target file\n%s\n", err)
 		os.Exit(1)
 	}
 }
@@ -128,5 +130,6 @@ func initConfig() {
 		viper.AddConfigPath("/etc/hermes/")
 	}
 
+	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
 }

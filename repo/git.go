@@ -26,10 +26,9 @@ func (gr *GitRepository) Clone(path string) error {
 	}
 
 	if _, err := git.Clone(storer, workDir, &git.CloneOptions{
-		URL:           gr.URL.String(),
-		ReferenceName: "refs/heads/master",
-		Progress:      os.Stdout,
-	}); err != nil {
+		URL:      gr.URL.String(),
+		Progress: os.Stdout,
+	}); err != nil && err != git.ErrRepositoryAlreadyExists {
 		return err
 	}
 	return nil
