@@ -34,12 +34,10 @@ func (gr *GitRepository) Clone(path string) error {
 		os.Exit(1)
 	}
 
-	// TODO: catch repo already exists error in commands?
-	if _, err := git.Clone(storer, repoFs, &git.CloneOptions{
+	_, err = git.Clone(storer, repoFs, &git.CloneOptions{
 		URL:      gr.URL.String(),
 		Progress: os.Stdout,
-	}); err != nil && err != git.ErrRepositoryAlreadyExists {
-		return err
-	}
-	return nil
+	})
+
+	return err
 }
