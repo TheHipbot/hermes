@@ -44,6 +44,7 @@ func SetTarget(target string) error {
 	checkForConfigDir()
 
 	file, err := configFs.Create(targetFilePath)
+	defer file.Close()
 	if err != nil {
 		return err
 	}
