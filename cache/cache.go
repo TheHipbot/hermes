@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -17,7 +18,7 @@ var (
 // Cache holds the cache of remotes and their repos
 type Cache struct {
 	Version string             `json:"version"`
-	Remotes map[string]*Remote `json:"remotes`
+	Remotes map[string]*Remote `json:"remotes"`
 }
 
 // Remote is a parent node in the cache tree
@@ -62,6 +63,28 @@ func Add(name, path string) error {
 			},
 		},
 	}
+	return nil
+}
+
+// Remove a repo from the cache
+func Remove(name string) error {
+	found := false
+	remote := strings.Split(name, "/")[0]
+
+	if r, ok := cache.Remotes[remote]; ok {
+		for i, repo := range r.Repos {
+			if strings.Compare(repo.Name, name) == 0 {
+				r.Repos = append(r.Repos[:i], r.Repos[i+1:]...)
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		return errors.New("Repo not found")
+	}
+
 	return nil
 }
 

@@ -101,6 +101,21 @@ func (s *CacheSuite) TestCacheAddNewRemote() {
 	s.NotNil(remote, "The remote should exist")
 }
 
+func (s *CacheSuite) TestRemoveCache() {
+	repoCnt := len(cache.Remotes["github.com"].Repos)
+	Remove("github.com/TheHipbot/dotfiles")
+	s.Equal(repoCnt-1, len(cache.Remotes["github.com"].Repos), "github.com remote should have one less repo")
+	results := Search("dotfiles")
+	s.Equal(len(results), 0, "There should no longer be a dotfiles repo")
+}
+
+func (s *CacheSuite) TestRemoveCacheNoRepo() {
+	repoCnt := len(cache.Remotes["github.com"].Repos)
+	err := Remove("github.com/TheHipbot/docker")
+	s.NotNil(err, "There should be an error returned")
+	s.Equal(repoCnt, len(cache.Remotes["github.com"].Repos), "github.com remote should have the same number of repos")
+}
+
 func TestCacheSuite(t *testing.T) {
 	suite.Run(t, new(CacheSuite))
 }
