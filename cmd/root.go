@@ -30,6 +30,7 @@ import (
 var (
 	cfgFile  string
 	aliasFlg bool
+	configFS fs.ConfigFS
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -69,7 +70,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 	repo := repo.GitRepository{
 		Name: repoName,
-		URL:  repoURL,
+		URL:  repoURL.String(),
 	}
 
 	if err := repo.Clone(pathToRepo); err != nil {
@@ -77,7 +78,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if err := fs.SetTarget(pathToRepo); err != nil {
+	if err := configFS.SetTarget(pathToRepo); err != nil {
 		fmt.Printf("Error creating target file\n%s\n", err)
 		os.Exit(1)
 	}

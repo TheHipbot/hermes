@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	configFS       ConfigFS
 	testConfigPath string
 	testTargetFile string
 	testCacheFile  string
@@ -29,13 +30,15 @@ func (s *ConfigFSSuite) SetupTest() {
 	viper.Set("config_path", testConfigPath)
 	viper.Set("target_file", testTargetFile)
 	viper.Set("cache_file", testCacheFile)
-	configFs = memfs.New()
+	configFS = ConfigFS{
+		FS: memfs.New(),
+	}
 }
 
 func (s *ConfigFSSuite) TestSetupCreateDir() {
-	Setup()
+	configFS.Setup()
 
-	_, err := configFs.Lstat(testConfigPath)
+	_, err := configFS.FS.Stat(testConfigPath)
 	s.Nil(err, "Setup should create config dir")
 }
 
@@ -44,10 +47,10 @@ func (s *ConfigFSSuite) TestSetTarget() {
 	bs := make([]byte, 40)
 
 	// set up to create config_dir in memfs
-	Setup()
+	configFS.Setup()
 
-	SetTarget(target)
-	file, err := configFs.Open(fmt.Sprintf("%s%s", testConfigPath, testTargetFile))
+	configFS.SetTarget(target)
+	file, err := configFS.FS.Open(fmt.Sprintf("%s%s", testConfigPath, testTargetFile))
 	s.Nil(err, "SetTarget should create a target file")
 
 	file.Read(bs)
@@ -57,7 +60,7 @@ func (s *ConfigFSSuite) TestSetTarget() {
 func (s *ConfigFSSuite) TestReadCache() {
 	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
 
-	file, err := configFs.Create(cachePath)
+	file, err := configFS.FS.Create(cachePath)
 	s.Nil(err, "Cache file should be created")
 
 	testCache := []byte(`{
@@ -103,20 +106,20 @@ func (s *ConfigFSSuite) TestReadCache() {
 }`)
 	file.Write(testCache)
 
-	c, err := ReadCache()
+	c, err := configFS.ReadCache()
 	s.Nil(err, "Cache file should be read without error")
 	s.Equal(string(testCache), string(c), "Cache should be read from cache file in config_path")
 }
 
 func (s *ConfigFSSuite) TestReadCacheNoFile() {
-	configFs.MkdirAll(viper.GetString("config_path"), 0751)
-	_, err := ReadCache()
+	configFS.FS.MkdirAll(viper.GetString("config_path"), 0751)
+	_, err := configFS.ReadCache()
 	s.NotNil(err, "ReadCache should return an error if no file present")
 }
 
 func (s *ConfigFSSuite) TestWriteCache() {
 	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
-	configFs.MkdirAll(viper.GetString("config_path"), 0751)
+	configFS.FS.MkdirAll(viper.GetString("config_path"), 0751)
 
 	testCache := []byte(`{
 	"version": "0.0.1",
@@ -159,11 +162,11 @@ func (s *ConfigFSSuite) TestWriteCache() {
 		}
 	}
 }`)
-	err := WriteCache(testCache)
+	err := configFS.WriteCache(testCache)
 	s.Nil(err, "WriteCache should run without error")
-	stat, err := configFs.Stat(cachePath)
+	stat, err := configFS.FS.Stat(cachePath)
 	s.Nil(err, "Cache file should get stat")
-	file, err := configFs.Open(cachePath)
+	file, err := configFS.FS.Open(cachePath)
 	s.Nil(err, "Cache file should exist and be opened")
 
 	data := make([]byte, stat.Size())
@@ -174,7 +177,7 @@ func (s *ConfigFSSuite) TestWriteCache() {
 
 func (s *ConfigFSSuite) TestWriteCacheOverwrite() {
 	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
-	configFs.MkdirAll(viper.GetString("config_path"), 0751)
+	configFS.FS.MkdirAll(viper.GetString("config_path"), 0751)
 
 	testCache := []byte(`{
 	"version": "0.0.1",
@@ -217,7 +220,7 @@ func (s *ConfigFSSuite) TestWriteCacheOverwrite() {
 		}
 	}
 }`)
-	err := WriteCache(testCache)
+	err := configFS.WriteCache(testCache)
 	s.Nil(err, "WriteCache should run without error")
 
 	testCacheOverride := []byte(`{
@@ -254,11 +257,11 @@ func (s *ConfigFSSuite) TestWriteCacheOverwrite() {
 		}
 	}`)
 
-	err = WriteCache(testCacheOverride)
+	err = configFS.WriteCache(testCacheOverride)
 	s.Nil(err, "WriteCache should run without error")
-	stat, err := configFs.Stat(cachePath)
+	stat, err := configFS.FS.Stat(cachePath)
 	s.Nil(err, "Cache file should get stat")
-	file, err := configFs.Open(cachePath)
+	file, err := configFS.FS.Open(cachePath)
 	s.Nil(err, "Cache file should exist and be opened")
 
 	data := make([]byte, stat.Size())

@@ -1,10 +1,13 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/TheHipbot/hermes/fs"
 )
 
 const (
@@ -12,8 +15,32 @@ const (
 )
 
 var (
-	cache Cache
+	cache    Cache
+	configFS *fs.ConfigFS
 )
+
+func init() {
+	configFS = fs.NewConfigFS()
+	cache = initCache(configFS.ReadCache())
+}
+
+func initCache(raw []byte, err error) Cache {
+	var result Cache
+	if err != nil {
+		result = Cache{
+			Version: cacheFormatVersion,
+		}
+	} else {
+		result = Cache{}
+		if err := json.Unmarshal(raw, &result); err != nil {
+			fmt.Print(err)
+			result = Cache{
+				Version: cacheFormatVersion,
+			}
+		}
+	}
+	return result
+}
 
 // Cache holds the cache of remotes and their repos
 type Cache struct {
@@ -23,9 +50,9 @@ type Cache struct {
 
 // Remote is a parent node in the cache tree
 type Remote struct {
-	Name  string   `json:"name"`
-	URL   *url.URL `json:"url"`
-	Repos []Repo   `json:"repos"`
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+	Repos []Repo `json:"repos"`
 }
 
 // Repo stores a repo and its location on the filesystem
@@ -33,6 +60,18 @@ type Remote struct {
 type Repo struct {
 	Name string `json:"name"`
 	Path string `json:"repo_path"`
+}
+
+func (c *Cache) save() error {
+	raw, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	if err := configFS.WriteCache(raw); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Add a repo to the cache
@@ -55,7 +94,7 @@ func Add(name, path string) error {
 
 	cache.Remotes[remote] = &Remote{
 		Name: remote,
-		URL:  remoteURL,
+		URL:  remoteURL.String(),
 		Repos: []Repo{
 			Repo{
 				Name: name,
@@ -63,6 +102,11 @@ func Add(name, path string) error {
 			},
 		},
 	}
+
+	if err := cache.save(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

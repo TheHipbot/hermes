@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"net/url"
 	"os"
 
 	billy "gopkg.in/src-d/go-billy.v4"
@@ -22,7 +21,7 @@ func init() {
 // implements the Repository interface
 type GitRepository struct {
 	Name string
-	URL  *url.URL
+	URL  string
 }
 
 // Clone git repository to path
@@ -35,7 +34,7 @@ func (gr *GitRepository) Clone(path string) error {
 	}
 
 	_, err = git.Clone(storer, repoFs, &git.CloneOptions{
-		URL:      gr.URL.String(),
+		URL:      gr.URL,
 		Progress: os.Stdout,
 	})
 

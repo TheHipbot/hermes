@@ -9,17 +9,21 @@ import (
 	"gopkg.in/src-d/go-billy.v4/osfs"
 )
 
-var (
-	configFs billy.Filesystem
-)
+// ConfigFS configuration filesystem struct
+type ConfigFS struct {
+	FS billy.Filesystem
+}
 
-func init() {
-	configFs = osfs.New(viper.GetString("config_path"))
+// NewConfigFS returns a ConfigFS object with the default FS
+func NewConfigFS() *ConfigFS {
+	return &ConfigFS{
+		FS: osfs.New(viper.GetString("config_path")),
+	}
 }
 
 // TODO bubble the error up
-func checkForConfigDir() error {
-	stat, err := configFs.Lstat(viper.GetString("config_path"))
+func (c *ConfigFS) checkForConfigDir() error {
+	stat, err := c.FS.Stat(viper.GetString("config_path"))
 	if err != nil || !stat.IsDir() {
 		return errors.New("Config directory doesn't exist or can't be opened, please run hermes setup")
 	}
@@ -27,21 +31,21 @@ func checkForConfigDir() error {
 }
 
 // Setup runs the initial hermes setup
-func Setup() error {
-	return configFs.MkdirAll(viper.GetString("config_path"), 0751)
+func (c *ConfigFS) Setup() error {
+	return c.FS.MkdirAll(viper.GetString("config_path"), 0751)
 }
 
 // SetTarget creates a target file with the directory
 // to move to
-func SetTarget(target string) error {
+func (c *ConfigFS) SetTarget(target string) error {
 	targetFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("target_file"))
 
 	// check for config dir
-	if err := checkForConfigDir(); err != nil {
+	if err := c.checkForConfigDir(); err != nil {
 		return err
 	}
 
-	file, err := configFs.Create(targetFilePath)
+	file, err := c.FS.Create(targetFilePath)
 	if err != nil {
 		return err
 	}
@@ -54,21 +58,21 @@ func SetTarget(target string) error {
 }
 
 // ReadCache writes the given byte area out to cache.json
-func ReadCache() ([]byte, error) {
+func (c *ConfigFS) ReadCache() ([]byte, error) {
 	var data []byte
 	var file billy.File
 	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
 
 	// check for config dir
-	if err := checkForConfigDir(); err != nil {
+	if err := c.checkForConfigDir(); err != nil {
 		return nil, err
 	}
 
-	stat, err := configFs.Stat(cacheFilePath)
+	stat, err := c.FS.Stat(cacheFilePath)
 	if err != nil {
 		return nil, err
 	}
-	file, err = configFs.Open(cacheFilePath)
+	file, err = c.FS.Open(cacheFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -84,16 +88,16 @@ func ReadCache() ([]byte, error) {
 }
 
 // WriteCache writes the given byte area out to cache.json
-func WriteCache(data []byte) error {
+func (c *ConfigFS) WriteCache(data []byte) error {
 	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
 
 	// check for config dir
-	if err := checkForConfigDir(); err != nil {
+	if err := c.checkForConfigDir(); err != nil {
 		return err
 	}
 
-	configFs.Remove(cacheFilePath)
-	file, err := configFs.Create(cacheFilePath)
+	c.FS.Remove(cacheFilePath)
+	file, err := c.FS.Create(cacheFilePath)
 	if err != nil {
 		return err
 	}

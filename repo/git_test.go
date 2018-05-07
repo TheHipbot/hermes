@@ -30,7 +30,7 @@ func (suite *GitRepositorySuite) TestCloneRepo() {
 
 	repo := GitRepository{
 		Name: testRepoName,
-		URL:  repoURL,
+		URL:  repoURL.String(),
 	}
 
 	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
@@ -63,7 +63,7 @@ func (suite *GitRepositorySuite) TestCloneExistingRepo() {
 
 	repo := GitRepository{
 		Name: testRepoName,
-		URL:  repoURL,
+		URL:  repoURL.String(),
 	}
 
 	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
