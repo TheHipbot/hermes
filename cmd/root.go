@@ -104,7 +104,8 @@ func init() {
 
 	viper.SetDefault("repo_path", fmt.Sprintf("%s/hermes-repos/", home))
 	viper.SetDefault("config_path", fmt.Sprintf("%s/.hermes/", home))
-	viper.SetDefault("target_name", ".hermes_target")
+	viper.SetDefault("target_file", ".hermes_target")
+	viper.SetDefault("cache_file", "cache.json")
 
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
