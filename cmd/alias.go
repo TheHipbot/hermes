@@ -40,13 +40,13 @@ func generateAlias() (string, error) {
 	}
 
 	aliasTemplate := `
-	function hermes() {
-		export HERMES_BIN="$(which hermes)"
-		$HERMES_BIN $@
-		if [ -f {{ .ConfigDir }}{{ .TargetFileName }} ]; then
-			cd $(cat {{ .ConfigDir }}{{ .TargetFileName }}) && rm {{ .ConfigDir }}{{ .TargetFileName }}
-		fi
-	}
+function hermes() {
+	export HERMES_BIN="$(which hermes)"
+	$HERMES_BIN $@
+	if [ -f {{ .ConfigDir }}{{ .TargetFileName }} ]; then
+		cd $(cat {{ .ConfigDir }}{{ .TargetFileName }}) && rm {{ .ConfigDir }}{{ .TargetFileName }}
+	fi
+}
 	
 `
 
