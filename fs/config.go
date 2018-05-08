@@ -17,7 +17,7 @@ type ConfigFS struct {
 // NewConfigFS returns a ConfigFS object with the default FS
 func NewConfigFS() *ConfigFS {
 	return &ConfigFS{
-		FS: osfs.New(viper.GetString("config_path")),
+		FS: osfs.New(""),
 	}
 }
 

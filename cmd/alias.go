@@ -36,7 +36,7 @@ func generateAlias() (string, error) {
 	var resolved bytes.Buffer
 	data := AliasData{
 		ConfigDir:      viper.GetString("config_path"),
-		TargetFileName: viper.GetString("target_name"),
+		TargetFileName: viper.GetString("target_file"),
 	}
 
 	aliasTemplate := `

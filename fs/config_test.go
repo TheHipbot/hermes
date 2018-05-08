@@ -44,16 +44,19 @@ func (s *ConfigFSSuite) TestSetupCreateDir() {
 
 func (s *ConfigFSSuite) TestSetTarget() {
 	target := "/repo_dir/github.com/TheHipbot/hermes/"
-	bs := make([]byte, 40)
 
 	// set up to create config_dir in memfs
 	configFS.Setup()
 
 	configFS.SetTarget(target)
+	stat, err := configFS.FS.Stat(fmt.Sprintf("%s%s", testConfigPath, testTargetFile))
+	s.Nil(err, "SetTarget should stat a target file")
+	bs := make([]byte, stat.Size())
 	file, err := configFS.FS.Open(fmt.Sprintf("%s%s", testConfigPath, testTargetFile))
 	s.Nil(err, "SetTarget should create a target file")
 
-	file.Read(bs)
+	_, err = file.Read(bs)
+	s.Nil(err, "Target file should be read")
 	s.True(strings.Contains(string(bs), target), "Target file content incorrect")
 }
 

@@ -25,12 +25,13 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 var (
 	cfgFile  string
 	aliasFlg bool
-	configFS fs.ConfigFS
+	configFS *fs.ConfigFS
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -73,7 +74,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		URL:  repoURL.String(),
 	}
 
-	if err := repo.Clone(pathToRepo); err != nil {
+	if err := repo.Clone(pathToRepo); err != nil && err != git.ErrRepositoryAlreadyExists {
 		fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
 		os.Exit(1)
 	}
@@ -111,6 +112,8 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
+
+	configFS = fs.NewConfigFS()
 }
 
 // initConfig reads in config file and ENV variables if set.
