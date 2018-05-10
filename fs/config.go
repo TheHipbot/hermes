@@ -60,7 +60,6 @@ func (c *ConfigFS) SetTarget(target string) error {
 // ReadCache writes the given byte area out to cache.json
 func (c *ConfigFS) ReadCache() ([]byte, error) {
 	var data []byte
-	var file billy.File
 	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
 
 	// check for config dir
@@ -68,11 +67,8 @@ func (c *ConfigFS) ReadCache() ([]byte, error) {
 		return nil, err
 	}
 
-	stat, err := c.FS.Stat(cacheFilePath)
-	if err != nil {
-		return nil, err
-	}
-	file, err = c.FS.Open(cacheFilePath)
+	stat, _ := c.FS.Stat(cacheFilePath)
+	file, err := c.FS.Open(cacheFilePath)
 	if err != nil {
 		return nil, err
 	}

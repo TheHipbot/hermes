@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -70,6 +72,10 @@ func (s *CacheSuite) SetupTest() {
 				},
 			},
 		},
+	}
+
+	openCache = func() {
+		cache = testCache
 	}
 }
 
@@ -143,19 +149,35 @@ func (s *CacheSuite) TestInitCacheWithInvalidData() {
 
 func (s *CacheSuite) TestCacheSave() {
 	s.Nil(testCache.save(), "testCache should save successfully")
+	fmt.Print(configFS.ReadCache())
 	actual := initCache(configFS.ReadCache())
 	s.Equal(testCache, actual, "Cache.save() should write current cache to the ConfigFS")
 }
 
 func (s *CacheSuite) TestCacheAdd() {
 	var results []Repo
-	cache = testCache
 
-	repoCnt := len(cache.Remotes["github.com"].Repos)
+	repoCnt := len(testCache.Remotes["github.com"].Repos)
 	Add("github.com/TheHipbot/weather", "/repos/")
 	results = Search("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(cache.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
+
+	var temp Cache
+	raw, err := configFS.ReadCache()
+	s.Nil(err, "Should be unmarshallable")
+	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
+	s.Equal(repoCnt+1, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
+
+	Add("github.com/TheHipbot/docker", "/repos/")
+	results = Search("docker")
+	s.Len(results, 2, "There should be the new repo")
+	s.Equal(repoCnt+2, len(cache.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
+
+	raw, err = configFS.ReadCache()
+	s.Nil(err, "Should be unmarshallable")
+	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
+	s.Equal(repoCnt+2, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
 }
 
 func (s *CacheSuite) TestCacheAddNewRemote() {

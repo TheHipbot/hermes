@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/TheHipbot/hermes/fs"
 )
@@ -15,13 +16,22 @@ const (
 )
 
 var (
-	cache    Cache
-	configFS *fs.ConfigFS
+	cache     Cache
+	configFS  *fs.ConfigFS
+	openCache func()
+	once      sync.Once
 )
 
 func init() {
 	configFS = fs.NewConfigFS()
-	cache = initCache(configFS.ReadCache())
+
+	// TODO refactor this out - it is currently needed because
+	// initializing cache to read from file happens before
+	// viper has been initialized with values to find config
+	// path and cache file
+	openCache = func() {
+		cache = initCache(configFS.ReadCache())
+	}
 }
 
 func initCache(raw []byte, err error) Cache {
@@ -29,13 +39,14 @@ func initCache(raw []byte, err error) Cache {
 	if err != nil {
 		result = Cache{
 			Version: cacheFormatVersion,
+			Remotes: make(map[string]*Remote),
 		}
 	} else {
 		result = Cache{}
 		if err := json.Unmarshal(raw, &result); err != nil {
-			fmt.Print(err)
 			result = Cache{
 				Version: cacheFormatVersion,
+				Remotes: make(map[string]*Remote),
 			}
 		}
 	}
@@ -76,31 +87,32 @@ func (c *Cache) save() error {
 
 // Add a repo to the cache
 func Add(name, path string) error {
+	once.Do(openCache)
+
 	repoPath := fmt.Sprintf("%s%s", path, name)
 	remote := strings.Split(name, "/")[0]
 
 	if r, ok := cache.Remotes[remote]; ok {
-		r.Repos = append(r.Repos, Repo{
+		cache.Remotes[remote].Repos = append(r.Repos, Repo{
 			Name: name,
 			Path: repoPath,
 		})
-		return nil
-	}
+	} else {
+		remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))
+		if err != nil {
+			return err
+		}
 
-	remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))
-	if err != nil {
-		return err
-	}
-
-	cache.Remotes[remote] = &Remote{
-		Name: remote,
-		URL:  remoteURL.String(),
-		Repos: []Repo{
-			Repo{
-				Name: name,
-				Path: repoPath,
+		cache.Remotes[remote] = &Remote{
+			Name: remote,
+			URL:  remoteURL.String(),
+			Repos: []Repo{
+				Repo{
+					Name: name,
+					Path: repoPath,
+				},
 			},
-		},
+		}
 	}
 
 	if err := cache.save(); err != nil {
@@ -112,6 +124,8 @@ func Add(name, path string) error {
 
 // Remove a repo from the cache
 func Remove(name string) error {
+	once.Do(openCache)
+
 	found := false
 	remote := strings.Split(name, "/")[0]
 
@@ -129,12 +143,18 @@ func Remove(name string) error {
 		return errors.New("Repo not found")
 	}
 
+	if err := cache.save(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Search will search the cache for any repos that match the
 // needle string
 func Search(needle string) []Repo {
+	once.Do(openCache)
+
 	var results []Repo
 	for _, remote := range cache.Remotes {
 		for _, repo := range remote.Repos {

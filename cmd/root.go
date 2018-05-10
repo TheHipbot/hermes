@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
@@ -69,17 +70,32 @@ func getHandler(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	repo := repo.GitRepository{
-		Name: repoName,
-		URL:  repoURL.String(),
+	var selectedRepo cache.Repo
+	cachedRepos := cache.Search(repoName)
+	if len(cachedRepos) == 1 {
+		selectedRepo = cachedRepos[0]
+	} else if len(cachedRepos) == 0 {
+		repo := repo.GitRepository{
+			Name: repoName,
+			URL:  repoURL.String(),
+		}
+		fmt.Println(pathToRepo)
+
+		if err := repo.Clone(pathToRepo); err != nil && err != git.ErrRepositoryAlreadyExists {
+			fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
+			os.Exit(1)
+		}
+		selectedRepo = cache.Repo{
+			Name: repoName,
+			Path: pathToRepo,
+		}
+		fmt.Println(fmt.Sprintf("adding %s", repoName))
+		fmt.Println(cache.Add(repoName, viper.GetString("repo_name")))
+	} else {
+		//prompt
 	}
 
-	if err := repo.Clone(pathToRepo); err != nil && err != git.ErrRepositoryAlreadyExists {
-		fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
-		os.Exit(1)
-	}
-
-	if err := configFS.SetTarget(pathToRepo); err != nil {
+	if err := configFS.SetTarget(selectedRepo.Path); err != nil {
 		fmt.Printf("Error creating target file\n%s\n", err)
 		os.Exit(1)
 	}
@@ -112,8 +128,6 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
-
-	configFS = fs.NewConfigFS()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -137,4 +151,5 @@ func initConfig() {
 
 	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
+	configFS = fs.NewConfigFS()
 }
