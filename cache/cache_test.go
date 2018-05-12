@@ -3,7 +3,6 @@ package cache
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 	"testing"
 
@@ -149,7 +148,6 @@ func (s *CacheSuite) TestInitCacheWithInvalidData() {
 
 func (s *CacheSuite) TestCacheSave() {
 	s.Nil(testCache.save(), "testCache should save successfully")
-	fmt.Print(configFS.ReadCache())
 	actual := initCache(configFS.ReadCache())
 	s.Equal(testCache, actual, "Cache.save() should write current cache to the ConfigFS")
 }
@@ -223,6 +221,22 @@ func (s *CacheSuite) TestCacheSearchWithResults() {
 	s.Len(results, 2, "There are 2 repos with files in the name")
 	s.Equal(results[0].Name, "gitlab.com/gitlab-org/gitlab-ce")
 	s.Equal(results[1].Name, "gitlab.com/gnachman/iterm2")
+}
+
+func (s *CacheSuite) TestCacheSearchCaseInSensitiveWithResults() {
+	var results []Repo
+	cache = testCache
+
+	results = Search("FILES")
+	s.Len(results, 2, "There are 2 repos with files in the name")
+	s.Equal(results[0].Name, "github.com/TheHipbot/dotfiles")
+	s.Equal(results[1].Name, "github.com/TheHipbot/dockerfiles")
+
+	results = Search("thehipbot")
+	s.Len(results, 3, "There are 3 repos with files in the name")
+	s.Equal(results[0].Name, "github.com/TheHipbot/hermes")
+	s.Equal(results[1].Name, "github.com/TheHipbot/dotfiles")
+	s.Equal(results[2].Name, "github.com/TheHipbot/dockerfiles")
 }
 
 func (s *CacheSuite) TestCacheSearchWithoutResults() {

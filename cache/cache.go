@@ -154,11 +154,11 @@ func Remove(name string) error {
 // needle string
 func Search(needle string) []Repo {
 	once.Do(openCache)
-
+	lowerSearch := strings.ToLower(needle)
 	var results []Repo
 	for _, remote := range cache.Remotes {
 		for _, repo := range remote.Repos {
-			if strings.Contains(repo.Name, needle) {
+			if strings.Contains(strings.ToLower(repo.Name), lowerSearch) {
 				results = append(results, repo)
 			}
 		}
