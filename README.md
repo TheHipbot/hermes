@@ -1,5 +1,4 @@
-# Hermes
-**Messenger of the Version Control Gods**
+# Hermes - Messenger of the Version Control Gods
 
 **Hermes allows you to manage your git repositories from the command line**
 
