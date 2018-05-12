@@ -6,6 +6,17 @@
 
 **OTHER NOTE:** Currently the project is still in the very early stages of development, so, although some features work, there's still plenty more to come and there is no guarantee of backwards compatibility until the project reaches the v1.0.0 mark. 
 
+### Table of Contents
+- [Installation](#installation)
+- [Setup](#setup)
+- [Configuration](#configuration)
+    - [Example File](#example-config)
+- [Usage](#usage)
+    - [Root/Get Command](#root-get-command)
+    - [Setup Command](#setup-command)
+    - [Alias Command](#alias-command)
+- [Contributing Guidlines](./CONTRIBUTING.md)
+
 ----
 
 ## Installation
@@ -46,6 +57,7 @@ Here is a list of the current supported config keys and values along with their 
 * `target_file` (default: `.hermes_target`) -  after running the hermes command, if there is a valid target (e.g. repo that you have cloned or want to jump to), hermes writes out the full path into the hermes target file. From there, the alias in your shell profile will read this, jump to the directory and then remove the target file. **NOTE:** `target_file` only specifies the file name, the file will be created in the `config_path`. if you change the target file after setting the hermes alias, you would need to open a new terminal session or re-source your profile file for the alias to realize the change
 * `cache_file` (default: `cache.json`) - hermes stores a cache of repos it is aware of to allow for tab completion and prompts. this will be in json format. **NOTE:** `cache_file` only specifies the file name, the file will be created in the `config_path`
 
+<a name="example-config"></a>
 ### Example .hermes.yml File
 
 ```yaml
@@ -57,6 +69,7 @@ target_file: .hermes_target_dir
 
 ## Usage
 
+<a name="root-get-command"></a>
 ### Root / Get Command
 
 `hermes <args>` or `hermes get <args>`
