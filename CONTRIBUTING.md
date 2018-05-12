@@ -16,10 +16,11 @@ Branches should include the name of the associated github issue.
 2. Clone down your fork and the hermes project itself
 3. Create a branch in your fork and push it up to your remote
 4. Go into your local clone of the hermes repository and run 
-    
+    ```bash
     git remote add fork https://github.com/<your user name>/hermes
     git fetch fork
     git checkout -t fork/<name of your branch>
+    ```
 
 5. Now you should be in your branch but in the hermes repository (this is necessary so that the go imports will work correctly). Run `dep ensure` or `make ensure` to install all vendored dependencies
 
