@@ -1,4 +1,4 @@
-package cache
+package fs
 
 import (
 	"encoding/json"
@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-
-	"github.com/TheHipbot/hermes/fs"
 )
 
 const (
@@ -16,45 +14,17 @@ const (
 )
 
 var (
-	cache     Cache
-	configFS  *fs.ConfigFS
-	openCache func()
-	once      sync.Once
+	configFS *ConfigFS
+	once     sync.Once
 )
 
 func init() {
-	configFS = fs.NewConfigFS()
-
-	// TODO refactor this out - it is currently needed because
-	// initializing cache to read from file happens before
-	// viper has been initialized with values to find config
-	// path and cache file
-	openCache = func() {
-		cache = initCache(configFS.ReadCache())
-	}
-}
-
-func initCache(raw []byte, err error) Cache {
-	var result Cache
-	if err != nil {
-		result = Cache{
-			Version: cacheFormatVersion,
-			Remotes: make(map[string]*Remote),
-		}
-	} else {
-		result = Cache{}
-		if err := json.Unmarshal(raw, &result); err != nil {
-			result = Cache{
-				Version: cacheFormatVersion,
-				Remotes: make(map[string]*Remote),
-			}
-		}
-	}
-	return result
+	configFS = NewConfigFS()
 }
 
 // Cache holds the cache of remotes and their repos
 type Cache struct {
+	cfs     *ConfigFS
 	Version string             `json:"version"`
 	Remotes map[string]*Remote `json:"remotes"`
 }
@@ -73,27 +43,53 @@ type Repo struct {
 	Path string `json:"repo_path"`
 }
 
-func (c *Cache) save() error {
+// NewCache creates a cache then returns it
+func NewCache() *Cache {
+	return &Cache{
+		cfs: configFS,
+	}
+}
+
+// Open the cache from the cache.json file in config
+// directory
+func (c *Cache) Open() {
+	raw, err := c.cfs.ReadCache()
+	var result Cache
+	if err != nil {
+		c.Version = cacheFormatVersion
+		c.Remotes = make(map[string]*Remote)
+	} else {
+		result = Cache{}
+		if err := json.Unmarshal(raw, &result); err != nil {
+			c.Version = cacheFormatVersion
+			c.Remotes = make(map[string]*Remote)
+		} else {
+			c.Version = result.Version
+			c.Remotes = result.Remotes
+		}
+	}
+}
+
+// Save cache to ConfigFS
+func (c *Cache) Save() error {
 	raw, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
 
-	if err := configFS.WriteCache(raw); err != nil {
+	if err := c.cfs.WriteCache(raw); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Add a repo to the cache
-func Add(name, path string) error {
-	once.Do(openCache)
-
+func (c *Cache) Add(name, path string) error {
 	repoPath := fmt.Sprintf("%s%s", path, name)
 	remote := strings.Split(name, "/")[0]
 
-	if r, ok := cache.Remotes[remote]; ok {
-		cache.Remotes[remote].Repos = append(r.Repos, Repo{
+	if r, ok := c.Remotes[remote]; ok {
+		c.Remotes[remote].Repos = append(r.Repos, Repo{
 			Name: name,
 			Path: repoPath,
 		})
@@ -103,7 +99,7 @@ func Add(name, path string) error {
 			return err
 		}
 
-		cache.Remotes[remote] = &Remote{
+		c.Remotes[remote] = &Remote{
 			Name: remote,
 			URL:  remoteURL.String(),
 			Repos: []Repo{
@@ -115,21 +111,15 @@ func Add(name, path string) error {
 		}
 	}
 
-	if err := cache.save(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Remove a repo from the cache
-func Remove(name string) error {
-	once.Do(openCache)
-
+func (c *Cache) Remove(name string) error {
 	found := false
 	remote := strings.Split(name, "/")[0]
 
-	if r, ok := cache.Remotes[remote]; ok {
+	if r, ok := c.Remotes[remote]; ok {
 		for i, repo := range r.Repos {
 			if strings.Compare(repo.Name, name) == 0 {
 				r.Repos = append(r.Repos[:i], r.Repos[i+1:]...)
@@ -143,20 +133,15 @@ func Remove(name string) error {
 		return errors.New("Repo not found")
 	}
 
-	if err := cache.save(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Search will search the cache for any repos that match the
 // needle string
-func Search(needle string) []Repo {
-	once.Do(openCache)
+func (c *Cache) Search(needle string) []Repo {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repo
-	for _, remote := range cache.Remotes {
+	for _, remote := range c.Remotes {
 		for _, repo := range remote.Repos {
 			if strings.Contains(strings.ToLower(repo.Name), lowerSearch) {
 				results = append(results, repo)

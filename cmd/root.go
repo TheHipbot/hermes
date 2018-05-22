@@ -20,8 +20,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
+	"github.com/TheHipbot/hermes/prompt"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -33,6 +33,8 @@ var (
 	cfgFile  string
 	aliasFlg bool
 	configFS *fs.ConfigFS
+	cache    *fs.Cache
+	prompter prompt.Factory
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -56,7 +58,7 @@ to quickly create a Cobra application.`,
 
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "get a new repo or goto an existing",
+	Short: "get a new repo or go to an existing",
 	Run:   getHandler,
 }
 
@@ -64,13 +66,14 @@ func getHandler(cmd *cobra.Command, args []string) {
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
 	repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
+	cache.Open()
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var selectedRepo cache.Repo
+	var selectedRepo fs.Repo
 	cachedRepos := cache.Search(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
@@ -79,20 +82,27 @@ func getHandler(cmd *cobra.Command, args []string) {
 			Name: repoName,
 			URL:  repoURL.String(),
 		}
-		fmt.Println(pathToRepo)
 
 		if err := repo.Clone(pathToRepo); err != nil && err != git.ErrRepositoryAlreadyExists {
 			fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
 			os.Exit(1)
 		}
-		selectedRepo = cache.Repo{
+		selectedRepo = fs.Repo{
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		fmt.Println(fmt.Sprintf("adding %s", repoName))
-		fmt.Println(cache.Add(repoName, viper.GetString("repo_name")))
+		if err := cache.Add(repoName, viper.GetString("repo_path")); err != nil {
+			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
+		}
+		cache.Save()
 	} else {
-		//prompt
+		p := prompt.NewRepoSelectPrompt(prompter, cachedRepos)
+		i, _, err := p.Run()
+		selectedRepo = cachedRepos[i]
+		if err != nil {
+			fmt.Printf("Error selecting repo\n%s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if err := configFS.SetTarget(selectedRepo.Path); err != nil {
@@ -128,6 +138,9 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
+
+	prompter = &prompt.Prompter{}
+	cache = fs.NewCache()
 }
 
 // initConfig reads in config file and ENV variables if set.

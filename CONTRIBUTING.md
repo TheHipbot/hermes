@@ -15,7 +15,7 @@ Branches should include the name of the associated github issue.
 1. Create a fork of hermes and ensure the master branch on the fork is up to date with the upstream
 2. Clone down your fork and the hermes project itself
 3. Create a branch in your fork and push it up to your remote
-4. Go into your local clone of the hermes repository and run 
+4. Go into your local copy of the hermes repository (the main project not your fork) and run 
     ```bash
     git remote add fork https://github.com/<your user name>/hermes
     git fetch fork

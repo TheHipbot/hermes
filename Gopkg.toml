@@ -31,11 +31,11 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.1"
+  version = "0.0.2"
 
 [[constraint]]
   name = "github.com/spf13/viper"
-  version = "1.0.0"
+  version = "1.0.2"
 
 [prune]
   go-tests = true
@@ -43,4 +43,8 @@
 
 [[constraint]]
   name = "gopkg.in/src-d/go-git.v4"
-  version = "4.3.0"
+  version = "4.3.1"
+
+[[constraint]]
+  name = "github.com/manifoldco/promptui"
+  revision = "c0c0d3afc6a03bcb5c1df10b70b862a650db9f9b"
