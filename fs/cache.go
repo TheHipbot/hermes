@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 const (
@@ -15,7 +14,6 @@ const (
 
 var (
 	configFS *ConfigFS
-	once     sync.Once
 )
 
 func init() {
@@ -44,9 +42,9 @@ type Repo struct {
 }
 
 // NewCache creates a cache then returns it
-func NewCache() *Cache {
+func NewCache(cfs *ConfigFS) *Cache {
 	return &Cache{
-		cfs: configFS,
+		cfs: cfs,
 	}
 }
 

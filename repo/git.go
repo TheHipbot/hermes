@@ -20,8 +20,18 @@ func init() {
 // GitRepository holds info for git repos and
 // implements the Repository interface
 type GitRepository struct {
+	fs   billy.Filesystem
 	Name string
 	URL  string
+}
+
+// NewGitRepository creates a GitRepository
+func NewGitRepository(name, url string) Repository {
+	return &GitRepository{
+		fs:   appFs,
+		Name: name,
+		URL:  url,
+	}
 }
 
 // Clone git repository to path

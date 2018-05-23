@@ -42,6 +42,12 @@
   version = "v1.4.7"
 
 [[projects]]
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
+  version = "v1.1.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -352,6 +358,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4403cf3925f43c4e936d6b00c46d5db43b1d34f63536b8210b041b2d9007a718"
+  inputs-digest = "63103db15055eca1d2b26ba7bc010095db9ef6d1a3210c5b576772100b561962"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -138,9 +138,6 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
-
-	prompter = &prompt.Prompter{}
-	cache = fs.NewCache()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -165,4 +162,6 @@ func initConfig() {
 	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
 	configFS = fs.NewConfigFS()
+	prompter = &prompt.Prompter{}
+	cache = fs.NewCache(configFS)
 }

@@ -1,3 +1,5 @@
+//go:generate mockgen -destination ../mock/mock_prompt.go github.com/TheHipbot/hermes/prompt Prompt,Factory
+
 package prompt
 
 import (

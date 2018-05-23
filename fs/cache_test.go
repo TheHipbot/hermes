@@ -75,7 +75,7 @@ func (s *CacheSuite) SetupTest() {
 }
 
 func (s *CacheSuite) TestNewClient() {
-	cache := NewCache()
+	cache := NewCache(configFS)
 	s.Equal(cache.cfs, configFS, "NewClient should return a cache object with the cfs set")
 }
 

@@ -49,6 +49,10 @@ ensure:
 build: ensure $(SOURCES)
 	GOOS=${GOOS} GOARCH=${GOARCH} $(GOCMD) build -o ${BIN_DIR}${BINARY}
 
+.PHONY: generate
+generate:
+	$(GOCMD) generate ./...
+
 .PHONY: test
 test: 
 	go test ./...
