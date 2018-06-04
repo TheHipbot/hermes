@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
 	"github.com/TheHipbot/hermes/prompt"
 	"github.com/TheHipbot/hermes/repo"
@@ -33,7 +34,7 @@ var (
 	cfgFile  string
 	aliasFlg bool
 	configFS *fs.ConfigFS
-	cache    *fs.Cache
+	fsCache  *cache.Cache
 	prompter prompt.Factory
 )
 
@@ -66,15 +67,16 @@ func getHandler(cmd *cobra.Command, args []string) {
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
 	repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
-	cache.Open()
+	fsCache.Open()
+	defer fsCache.Close()
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var selectedRepo fs.Repo
-	cachedRepos := cache.Search(repoName)
+	var selectedRepo cache.Repo
+	cachedRepos := fsCache.Search(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
 	} else if len(cachedRepos) == 0 {
@@ -87,14 +89,14 @@ func getHandler(cmd *cobra.Command, args []string) {
 			fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
 			os.Exit(1)
 		}
-		selectedRepo = fs.Repo{
+		selectedRepo = cache.Repo{
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := cache.Add(repoName, viper.GetString("repo_path")); err != nil {
+		if err := fsCache.Add(repoName, viper.GetString("repo_path")); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
 		}
-		cache.Save()
+		fsCache.Save()
 	} else {
 		p := prompt.NewRepoSelectPrompt(prompter, cachedRepos)
 		i, _, err := p.Run()
@@ -163,5 +165,10 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 	configFS = fs.NewConfigFS()
 	prompter = &prompt.Prompter{}
-	cache = fs.NewCache(configFS)
+
+	cacheFile, err := configFS.GetCacheFile()
+	if err != nil {
+		fmt.Println("Cache file could not be opened or created")
+	}
+	fsCache = cache.NewCache(cacheFile)
 }

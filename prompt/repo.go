@@ -3,7 +3,7 @@
 package prompt
 
 import (
-	"github.com/TheHipbot/hermes/fs"
+	"github.com/TheHipbot/hermes/cache"
 	"github.com/manifoldco/promptui"
 )
 
@@ -41,6 +41,6 @@ func (b *Prompter) CreateSelectPrompt(label string, items interface{}, tmpls *pr
 
 // NewRepoSelectPrompt returns a Prompt to select a Repo cache entry from
 // a given list and return the selected repo
-func NewRepoSelectPrompt(f Factory, repos []fs.Repo) Prompt {
+func NewRepoSelectPrompt(f Factory, repos []cache.Repo) Prompt {
 	return f.CreateSelectPrompt("Select a repo", repos, selectRepoTemplates)
 }

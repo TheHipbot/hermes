@@ -3,9 +3,9 @@ package prompt
 import (
 	"testing"
 
+	"github.com/TheHipbot/hermes/cache"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/TheHipbot/hermes/fs"
 	"github.com/manifoldco/promptui"
 
 	"github.com/stretchr/testify/suite"
@@ -25,12 +25,12 @@ func (p *prompterMock) CreateSelectPrompt(label string, items interface{}, tmpls
 }
 
 func (s *PromptRepoSuite) TestPrompterCreateSelectRepo() {
-	repos := []fs.Repo{
-		fs.Repo{
+	repos := []cache.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/test-repos/github.com/TheHipbot/hermes",
 		},
-		fs.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/test-repos/github.com/TheHipbot/dockerfiles",
 		},
@@ -45,12 +45,12 @@ func (s *PromptRepoSuite) TestPrompterCreateSelectRepo() {
 
 func (s *PromptRepoSuite) TestNewRepoSelectPrompt() {
 	prompter := new(prompterMock)
-	repos := []fs.Repo{
-		fs.Repo{
+	repos := []cache.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/test-repos/github.com/TheHipbot/hermes",
 		},
-		fs.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/test-repos/github.com/TheHipbot/dockerfiles",
 		},

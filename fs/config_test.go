@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -60,217 +61,25 @@ func (s *ConfigFSSuite) TestSetTarget() {
 	s.True(strings.Contains(string(bs), target), "Target file content incorrect")
 }
 
-func (s *ConfigFSSuite) TestReadCache() {
-	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
-
-	file, err := cfs.FS.Create(cachePath)
-	s.Nil(err, "Cache file should be created")
-
-	testCache := []byte(`{
-	"version": "0.0.1",
-	"remotes": {
-		"github.com": {
-			"name": "github.com",
-			"url":  "https://github.com",
-			"repos": [
-				{
-					"name": "github.com/TheHipbot/hermes",
-					"repo_path": "/repos/github.com/TheHipbot/hermes",
-				},
-				{
-					"name": "github.com/TheHipbot/dotfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dotfiles",
-				},
-				{
-					"name": "github.com/TheHipbot/dockerfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dockerfiles",
-				},
-				{
-					"name": "github.com/src-d/go-git",
-					"repo_path": "/repos/github.com/src-d/go-git",
-				}
-			]
-		},
-		"gitlab.com": {
-			"name": "gitlab.com",
-			"url":  "https://gitlab.com",
-			"repos": [
-				{
-					"name": "gitlab.com/gitlab-org/gitlab-ce",
-					"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
-				},
-				{
-					"name": "gitlab.com/gnachman/iterm2",
-					"repo_path": "/repos/gitlab.com/gnachman/iterm2"
-				}
-			]
-		}
-	}
-}`)
-	file.Write(testCache)
-
-	c, err := cfs.ReadCache()
-	s.Nil(err, "Cache file should be read without error")
-	s.Equal(string(testCache), string(c), "Cache should be read from cache file in config_path")
+func (s *ConfigFSSuite) GetCacheFileCreateTest() {
+	file, err := cfs.GetCacheFile()
+	s.NotNil(err, "GetCacheFile should not error")
+	file.Close()
+	info, err := cfs.FS.Stat(fmt.Sprintf("%s%s", testConfigPath, testCacheFile))
+	s.NotNil(err, "Should be able to stat file")
+	s.True(info.Mode().IsRegular(), "Cache file should exit")
 }
 
-func (s *ConfigFSSuite) TestReadCacheNoFile() {
-	cfs.FS.MkdirAll(viper.GetString("config_path"), 0751)
-	_, err := cfs.ReadCache()
-	s.NotNil(err, "ReadCache should return an error if no file present")
-}
-
-func (s *ConfigFSSuite) TestWriteCache() {
-	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
-	cfs.FS.MkdirAll(viper.GetString("config_path"), 0751)
-
-	testCache := []byte(`{
-	"version": "0.0.1",
-	"remotes": {
-		"github.com": {
-			"name": "github.com",
-			"url":  "https://github.com",
-			"repos": [
-				{
-					"name": "github.com/TheHipbot/hermes",
-					"repo_path": "/repos/github.com/TheHipbot/hermes",
-				},
-				{
-					"name": "github.com/TheHipbot/dotfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dotfiles",
-				},
-				{
-					"name": "github.com/TheHipbot/dockerfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dockerfiles",
-				},
-				{
-					"name": "github.com/src-d/go-git",
-					"repo_path": "/repos/github.com/src-d/go-git",
-				}
-			]
-		},
-		"gitlab.com": {
-			"name": "gitlab.com",
-			"url":  "https://gitlab.com",
-			"repos": [
-				{
-					"name": "gitlab.com/gitlab-org/gitlab-ce",
-					"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
-				},
-				{
-					"name": "gitlab.com/gnachman/iterm2",
-					"repo_path": "/repos/gitlab.com/gnachman/iterm2"
-				}
-			]
-		}
-	}
-}`)
-	err := cfs.WriteCache(testCache)
-	s.Nil(err, "WriteCache should run without error")
-	stat, err := cfs.FS.Stat(cachePath)
-	s.Nil(err, "Cache file should get stat")
-	file, err := cfs.FS.Open(cachePath)
-	s.Nil(err, "Cache file should exist and be opened")
-
-	data := make([]byte, stat.Size())
-	_, err = file.Read(data)
-	s.Nil(err, "Should read data from cache file")
-	s.Equal(string(testCache), string(data), "Cache should be read from cache file in config_path")
-}
-
-func (s *ConfigFSSuite) TestWriteCacheOverwrite() {
-	cachePath := fmt.Sprintf("%s%s", testConfigPath, testCacheFile)
-	cfs.FS.MkdirAll(viper.GetString("config_path"), 0751)
-
-	testCache := []byte(`{
-	"version": "0.0.1",
-	"remotes": {
-		"github.com": {
-			"name": "github.com",
-			"url":  "https://github.com",
-			"repos": [
-				{
-					"name": "github.com/TheHipbot/hermes",
-					"repo_path": "/repos/github.com/TheHipbot/hermes",
-				},
-				{
-					"name": "github.com/TheHipbot/dotfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dotfiles",
-				},
-				{
-					"name": "github.com/TheHipbot/dockerfiles",
-					"repo_path": "/repos/github.com/TheHipbot/dockerfiles",
-				},
-				{
-					"name": "github.com/src-d/go-git",
-					"repo_path": "/repos/github.com/src-d/go-git",
-				}
-			]
-		},
-		"gitlab.com": {
-			"name": "gitlab.com",
-			"url":  "https://gitlab.com",
-			"repos": [
-				{
-					"name": "gitlab.com/gitlab-org/gitlab-ce",
-					"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
-				},
-				{
-					"name": "gitlab.com/gnachman/iterm2",
-					"repo_path": "/repos/gitlab.com/gnachman/iterm2"
-				}
-			]
-		}
-	}
-}`)
-	err := cfs.WriteCache(testCache)
-	s.Nil(err, "WriteCache should run without error")
-
-	testCacheOverride := []byte(`{
-		"version": "0.0.1",
-		"remotes": {
-			"github.com": {
-				"name": "github.com",
-				"url":  "https://github.com",
-				"repos": [
-					{
-						"name": "github.com/TheHipbot/dotfiles",
-						"repo_path": "/repos/github.com/TheHipbot/dotfiles",
-					},
-					{
-						"name": "github.com/TheHipbot/dockerfiles",
-						"repo_path": "/repos/github.com/TheHipbot/dockerfiles",
-					},
-					{
-						"name": "github.com/src-d/go-git",
-						"repo_path": "/repos/github.com/src-d/go-git",
-					}
-				]
-			},
-			"gitlab.com": {
-				"name": "gitlab.com",
-				"url":  "https://gitlab.com",
-				"repos": [
-					{
-						"name": "gitlab.com/gnachman/iterm2",
-						"repo_path": "/repos/gitlab.com/gnachman/iterm2"
-					}
-				]
-			}
-		}
-	}`)
-
-	err = cfs.WriteCache(testCacheOverride)
-	s.Nil(err, "WriteCache should run without error")
-	stat, err := cfs.FS.Stat(cachePath)
-	s.Nil(err, "Cache file should get stat")
-	file, err := cfs.FS.Open(cachePath)
-	s.Nil(err, "Cache file should exist and be opened")
-
-	data := make([]byte, stat.Size())
-	_, err = file.Read(data)
-	s.Nil(err, "Should read data from cache file")
-	s.Equal(string(testCacheOverride), string(data), "Cache should be read from cache file in config_path")
+func (s *ConfigFSSuite) GetCacheFileExistingTest() {
+	file, err := cfs.GetCacheFile()
+	s.NotNil(err, "GetCacheFile should not error")
+	file.Write([]byte("test"))
+	file.Close()
+	file, err = cfs.FS.Open(fmt.Sprintf("%s%s", testConfigPath, testCacheFile))
+	s.NotNil(err, "Should be able to stat file")
+	content, err := ioutil.ReadAll(file)
+	s.NotNil(err, "Should be able to read file")
+	s.Equal([]byte("test"), content, "Cache file should exit")
 }
 
 func TestConfigFSSuite(t *testing.T) {

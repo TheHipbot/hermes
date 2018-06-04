@@ -57,51 +57,16 @@ func (c *ConfigFS) SetTarget(target string) error {
 	return nil
 }
 
-// ReadCache writes the given byte area out to cache.json
-func (c *ConfigFS) ReadCache() ([]byte, error) {
-	var data []byte
+// GetCacheFile gets the cache file from the config folder, if file doesn't exists
+// it attempts to create it
+func (c *ConfigFS) GetCacheFile() (billy.File, error) {
 	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
-
-	// check for config dir
-	if err := c.checkForConfigDir(); err != nil {
-		return nil, err
+	if _, err := c.FS.Stat(cacheFilePath); err != nil {
+		file, err := c.FS.Create(cacheFilePath)
+		if err != nil {
+			return nil, err
+		}
+		return file, nil
 	}
-
-	stat, _ := c.FS.Stat(cacheFilePath)
-	file, err := c.FS.Open(cacheFilePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	data = make([]byte, stat.Size())
-
-	_, err = file.Read(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
-// WriteCache writes the given byte area out to cache.json
-func (c *ConfigFS) WriteCache(data []byte) error {
-	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
-
-	// check for config dir
-	if err := c.checkForConfigDir(); err != nil {
-		return err
-	}
-
-	c.FS.Remove(cacheFilePath)
-	file, err := c.FS.Create(cacheFilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	if _, err := file.Write(data); err != nil {
-		return err
-	}
-
-	return nil
+	return c.FS.Open(cacheFilePath)
 }

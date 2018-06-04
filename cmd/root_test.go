@@ -4,19 +4,23 @@ import (
 	"fmt"
 	"testing"
 
+	"gopkg.in/src-d/go-billy.v4"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/src-d/go-billy.v4/memfs"
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
 	mock_prompt "github.com/TheHipbot/hermes/mock"
 	"github.com/stretchr/testify/suite"
 )
 
 var (
-	cmd = &cobra.Command{}
+	cmd       = &cobra.Command{}
+	cacheFile billy.File
 )
 
 type RootCmdSuite struct {
@@ -28,13 +32,19 @@ func (s *RootCmdSuite) SetupTest() {
 		FS: memfs.New(),
 	}
 	configFS.Setup()
-	cache = fs.NewCache(configFS)
+	cacheFile, _ = configFS.GetCacheFile()
+	fsCache = cache.NewCache(cacheFile)
+}
+
+func (s *RootCmdSuite) TearDownSuite() {
+	fsCache.Close()
 }
 
 func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	ctrl := gomock.NewController(s.T())
 	defer ctrl.Finish()
-	configFS.WriteCache([]byte(`{
+	cacheFile.Seek(0, 0)
+	p, _ := cacheFile.Write([]byte(`{
 		"version": "0.0.1",
 		"remotes": {
 			"github.com": {
@@ -75,6 +85,8 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 			}
 		}
 	}`))
+	cacheFile.Truncate(int64(p))
+	fsCache.Open()
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
 	mockPrompter.
@@ -97,7 +109,8 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 	ctrl := gomock.NewController(s.T())
 	defer ctrl.Finish()
-	configFS.WriteCache([]byte(`{
+	cacheFile.Seek(0, 0)
+	p, _ := cacheFile.Write([]byte(`{
 		"version": "0.0.1",
 		"remotes": {
 			"github.com": {
@@ -138,16 +151,18 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 			}
 		}
 	}`))
-	repos := []fs.Repo{
-		fs.Repo{
+	cacheFile.Truncate(int64(p))
+	fsCache.Open()
+	repos := []cache.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/repos/github.com/TheHipbot/hermes",
 		},
-		fs.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/dotfiles",
 			Path: "/repos/github.com/TheHipbot/dotfiles",
 		},
-		fs.Repo{
+		cache.Repo{
 			Name: "github.com/TheHipbot/dockerfiles",
 			Path: "/repos/github.com/TheHipbot/dockerfiles",
 		},

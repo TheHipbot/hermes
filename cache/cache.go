@@ -1,9 +1,11 @@
-package fs
+package cache
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/url"
 	"strings"
 )
@@ -12,17 +14,9 @@ const (
 	cacheFormatVersion = "0.0.1"
 )
 
-var (
-	configFS *ConfigFS
-)
-
-func init() {
-	configFS = NewConfigFS()
-}
-
 // Cache holds the cache of remotes and their repos
 type Cache struct {
-	cfs     *ConfigFS
+	storer  Storer
 	Version string             `json:"version"`
 	Remotes map[string]*Remote `json:"remotes"`
 }
@@ -41,17 +35,25 @@ type Repo struct {
 	Path string `json:"repo_path"`
 }
 
+// Storer persists the cache
+type Storer interface {
+	io.ReadWriteSeeker
+	io.Closer
+	Truncate(size int64) error
+}
+
 // NewCache creates a cache then returns it
-func NewCache(cfs *ConfigFS) *Cache {
+func NewCache(storer Storer) *Cache {
 	return &Cache{
-		cfs: cfs,
+		storer: storer,
 	}
 }
 
 // Open the cache from the cache.json file in config
 // directory
 func (c *Cache) Open() {
-	raw, err := c.cfs.ReadCache()
+	_, err := c.storer.Seek(0, 0)
+	raw, err := ioutil.ReadAll(c.storer)
 	var result Cache
 	if err != nil {
 		c.Version = cacheFormatVersion
@@ -75,10 +77,25 @@ func (c *Cache) Save() error {
 		return err
 	}
 
-	if err := c.cfs.WriteCache(raw); err != nil {
+	_, err = c.storer.Seek(0, 0)
+	if err != nil {
 		return err
 	}
-	return nil
+	p, err := c.storer.Write(raw)
+	if err != nil {
+		return err
+	}
+	c.storer.Truncate(int64(p))
+	if err != nil {
+		return err
+	}
+	_, err = c.storer.Seek(0, 0)
+	return err
+}
+
+// Close cache storer
+func (c *Cache) Close() error {
+	return c.storer.Close()
 }
 
 // Add a repo to the cache

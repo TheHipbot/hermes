@@ -1,18 +1,19 @@
-package fs
+package cache
 
 import (
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"net/url"
 	"testing"
 
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/suite"
 	"gopkg.in/src-d/go-billy.v4/memfs"
+
+	"github.com/stretchr/testify/suite"
 )
 
 var (
-	testCache Cache
+	testCache  Cache
+	testStorer Storer
 )
 
 type CacheSuite struct {
@@ -20,18 +21,16 @@ type CacheSuite struct {
 }
 
 func (s *CacheSuite) SetupTest() {
-	viper.Set("config_path", "/test/.hermes/")
-	viper.Set("cache_file", "cache.json")
+	var err error
+	testFs := memfs.New()
+	testStorer, err = testFs.Create("cache.json")
+	s.Nil(err, "Setup should be able to create test cache file")
 
-	configFS = &ConfigFS{
-		FS: memfs.New(),
-	}
-	configFS.Setup()
 	githubURL, _ := url.Parse("https://github.com")
 	gitLabURL, _ := url.Parse("https://gitlab.com")
 
 	testCache = Cache{
-		cfs:     configFS,
+		storer:  testStorer,
 		Version: cacheFormatVersion,
 		Remotes: map[string]*Remote{
 			"github.com": &Remote{
@@ -75,12 +74,12 @@ func (s *CacheSuite) SetupTest() {
 }
 
 func (s *CacheSuite) TestNewClient() {
-	cache := NewCache(configFS)
-	s.Equal(cache.cfs, configFS, "NewClient should return a cache object with the cfs set")
+	cache := NewCache(testStorer)
+	s.Equal(cache.storer, testStorer, "NewClient should return a cache object with the storer set")
 }
 
 func (s *CacheSuite) TestCacheOpenWithFileData() {
-	err := configFS.WriteCache([]byte(`{
+	_, err := testStorer.Write([]byte(`{
 		"version": "0.0.1",
 		"remotes": {
 			"github.com": {
@@ -123,10 +122,9 @@ func (s *CacheSuite) TestCacheOpenWithFileData() {
 	}`))
 	s.Nil(err, "Cache should write successfully")
 	cache := &Cache{
-		cfs: configFS,
+		storer: testStorer,
 	}
 	cache.Open()
-	fmt.Println(cache.Remotes)
 
 	s.Equal(cache.Version, "0.0.1", "Cache format version should be 0.0.1")
 	s.NotNil(cache.Remotes["github.com"], "There should be repos in the github.com remote")
@@ -139,7 +137,7 @@ func (s *CacheSuite) TestCacheOpenWithFileData() {
 
 func (s *CacheSuite) TestCacheOpenWithReadError() {
 	cache := &Cache{
-		cfs: configFS,
+		storer: testStorer,
 	}
 	cache.Open()
 
@@ -148,11 +146,11 @@ func (s *CacheSuite) TestCacheOpenWithReadError() {
 }
 
 func (s *CacheSuite) TestCacheOpenWithInvalidData() {
-	configFS.WriteCache([]byte(`{
+	testStorer.Write([]byte(`{
 	"version": "0.0.1",
 }`))
 	cache := &Cache{
-		cfs: configFS,
+		storer: testStorer,
 	}
 	cache.Open()
 
@@ -163,7 +161,7 @@ func (s *CacheSuite) TestCacheOpenWithInvalidData() {
 func (s *CacheSuite) TestCacheSave() {
 	s.Nil(testCache.Save(), "testCache should save successfully")
 	cache := &Cache{
-		cfs: configFS,
+		storer: testStorer,
 	}
 	cache.Open()
 	s.Equal(cache.Version, testCache.Version, "Versions between caches should be equal")
@@ -207,11 +205,10 @@ func (s *CacheSuite) TestCacheAddThenSave() {
 	results = testCache.Search("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testCache.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
-	testCache.Save()
-
+	err := testCache.Save()
+	s.Nil(err, "Should save")
 	var temp Cache
-	raw, err := configFS.ReadCache()
-	fmt.Println(configFS.ReadCache())
+	raw, err := ioutil.ReadAll(testStorer)
 	s.Nil(err, "Should be unmarshallable")
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
 	s.Equal(repoCnt+1, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
@@ -222,7 +219,7 @@ func (s *CacheSuite) TestCacheAddThenSave() {
 	s.Equal(repoCnt+2, len(testCache.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 	testCache.Save()
 
-	raw, err = configFS.ReadCache()
+	raw, err = ioutil.ReadAll(testStorer)
 	s.Nil(err, "Should be unmarshallable")
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
 	s.Equal(repoCnt+2, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
@@ -241,6 +238,20 @@ func (s *CacheSuite) TestRemoveCacheNoRepo() {
 	err := testCache.Remove("github.com/TheHipbot/docker")
 	s.NotNil(err, "There should be an error returned")
 	s.Equal(repoCnt, len(testCache.Remotes["github.com"].Repos), "github.com remote should have the same number of repos")
+}
+
+func (s *CacheSuite) TestRemoveCacheAndSave() {
+	repoCnt := len(testCache.Remotes["github.com"].Repos)
+	testCache.Save()
+	testCache.Remove("github.com/TheHipbot/dotfiles")
+	testCache.Save()
+	cache := Cache{
+		storer: testStorer,
+	}
+	cache.Open()
+	s.Equal(repoCnt-1, len(cache.Remotes["github.com"].Repos), "github.com remote should have one less repo")
+	results := cache.Search("dotfiles")
+	s.Equal(len(results), 0, "There should no longer be a dotfiles repo")
 }
 
 func (s *CacheSuite) TestCacheSearchWithResults() {
