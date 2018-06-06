@@ -3,6 +3,7 @@ package fs
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/spf13/viper"
 	billy "gopkg.in/src-d/go-billy.v4"
@@ -62,11 +63,7 @@ func (c *ConfigFS) SetTarget(target string) error {
 func (c *ConfigFS) GetCacheFile() (billy.File, error) {
 	cacheFilePath := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("cache_file"))
 	if _, err := c.FS.Stat(cacheFilePath); err != nil {
-		file, err := c.FS.Create(cacheFilePath)
-		if err != nil {
-			return nil, err
-		}
-		return file, nil
+		return c.FS.Create(cacheFilePath)
 	}
-	return c.FS.Open(cacheFilePath)
+	return c.FS.OpenFile(cacheFilePath, os.O_RDWR, 0666)
 }

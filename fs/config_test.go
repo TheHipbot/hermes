@@ -64,6 +64,8 @@ func (s *ConfigFSSuite) TestSetTarget() {
 func (s *ConfigFSSuite) GetCacheFileCreateTest() {
 	file, err := cfs.GetCacheFile()
 	s.NotNil(err, "GetCacheFile should not error")
+	_, err = file.Write([]byte("test"))
+	s.Nil(err, "File should be writable")
 	file.Close()
 	info, err := cfs.FS.Stat(fmt.Sprintf("%s%s", testConfigPath, testCacheFile))
 	s.NotNil(err, "Should be able to stat file")
