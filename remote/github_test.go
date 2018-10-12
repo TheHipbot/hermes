@@ -40,6 +40,12 @@ func (s *GitHubRemoteSuite) TestSetAuth() {
 	s.Equal(testAuth, gh.Auth, "Auth should be set")
 }
 
+func (s *GitHubRemoteSuite) TestAuthType() {
+	d, err := githubCreator()
+	s.Nil(err, "Creator should not return error")
+	s.Equal(authToken, d.AuthType(), "AuthType should be authToken")
+}
+
 func (s *GitHubRemoteSuite) TestGetRepos() {
 	reqNum := 0
 	testToken := "1234abcd"

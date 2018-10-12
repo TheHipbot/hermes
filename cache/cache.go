@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../mock/mock_cache.go github.com/TheHipbot/hermes/cache Cache
 package cache
 
 import (
@@ -14,18 +15,30 @@ const (
 	cacheFormatVersion = "0.0.1"
 )
 
-// Cache holds the cache of remotes and their repos
-type Cache struct {
-	storer  Storer
+type cache struct {
+	storer  storer
 	Version string             `json:"version"`
 	Remotes map[string]*Remote `json:"remotes"`
 }
 
+// Cache interface to open and save repo cache
+type Cache interface {
+	Open()
+	Save() error
+	Close() error
+	Add(name, path string) error
+	AddRemote(url, name string) error
+	Search(needle string) []Repo
+}
+
 // Remote is a parent node in the cache tree
 type Remote struct {
-	Name  string `json:"name"`
-	URL   string `json:"url"`
-	Repos []Repo `json:"repos"`
+	Name     string            `json:"name"`
+	URL      string            `json:"url"`
+	Protocol string            `json:"protocol"`
+	Type     string            `json:"type"`
+	Meta     map[string]string `json:"meta"`
+	Repos    []Repo            `json:"repos"`
 }
 
 // Repo stores a repo and its location on the filesystem
@@ -35,31 +48,31 @@ type Repo struct {
 	Path string `json:"repo_path"`
 }
 
-// Storer persists the cache
-type Storer interface {
+// storer persists the cache
+type storer interface {
 	io.ReadWriteSeeker
 	io.Closer
 	Truncate(size int64) error
 }
 
 // NewCache creates a cache then returns it
-func NewCache(storer Storer) *Cache {
-	return &Cache{
+func NewCache(storer storer) Cache {
+	return &cache{
 		storer: storer,
 	}
 }
 
 // Open the cache from the cache.json file in config
 // directory
-func (c *Cache) Open() {
+func (c *cache) Open() {
 	_, err := c.storer.Seek(0, 0)
 	raw, err := ioutil.ReadAll(c.storer)
-	var result Cache
+	var result cache
 	if err != nil {
 		c.Version = cacheFormatVersion
 		c.Remotes = make(map[string]*Remote)
 	} else {
-		result = Cache{}
+		result = cache{}
 		if err := json.Unmarshal(raw, &result); err != nil {
 			c.Version = cacheFormatVersion
 			c.Remotes = make(map[string]*Remote)
@@ -71,7 +84,7 @@ func (c *Cache) Open() {
 }
 
 // Save cache to ConfigFS
-func (c *Cache) Save() error {
+func (c *cache) Save() error {
 	raw, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -94,12 +107,12 @@ func (c *Cache) Save() error {
 }
 
 // Close cache storer
-func (c *Cache) Close() error {
+func (c *cache) Close() error {
 	return c.storer.Close()
 }
 
 // Add a repo to the cache
-func (c *Cache) Add(name, path string) error {
+func (c *cache) Add(name, path string) error {
 	repoPath := fmt.Sprintf("%s%s", path, name)
 	remote := strings.Split(name, "/")[0]
 
@@ -130,7 +143,7 @@ func (c *Cache) Add(name, path string) error {
 }
 
 // Remove a repo from the cache
-func (c *Cache) Remove(name string) error {
+func (c *cache) Remove(name string) error {
 	found := false
 	remote := strings.Split(name, "/")[0]
 
@@ -151,9 +164,35 @@ func (c *Cache) Remove(name string) error {
 	return nil
 }
 
+// AddRemote adds a remote to the cache
+func (c *cache) AddRemote(url, name string) error {
+	// type Remote struct {
+	// 	Name     string            `json:"name"`
+	// 	URL      string            `json:"url"`
+	// 	Protocol string            `json:"protocol"`
+	// 	Type     string            `json:"type"`
+	// 	Meta     map[string]string `json:"meta"`
+	// 	Repos    []Repo            `json:"repos"`
+	// }
+
+	if _, ok := c.Remotes[name]; ok {
+		return errors.New("Remote already exists")
+	}
+
+	remote := &Remote{
+		Name:     name,
+		URL:      url,
+		Protocol: "http",
+		Repos:    []Repo{},
+	}
+
+	c.Remotes[name] = remote
+	return nil
+}
+
 // Search will search the cache for any repos that match the
 // needle string
-func (c *Cache) Search(needle string) []Repo {
+func (c *cache) Search(needle string) []Repo {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repo
 	for _, remote := range c.Remotes {

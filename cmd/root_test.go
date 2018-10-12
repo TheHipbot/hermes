@@ -44,7 +44,7 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	ctrl := gomock.NewController(s.T())
 	defer ctrl.Finish()
 	cacheFile.Seek(0, 0)
-	p, _ := cacheFile.Write([]byte(`{
+	p, err := cacheFile.Write([]byte(`{
 		"version": "0.0.1",
 		"remotes": {
 			"github.com": {
@@ -85,6 +85,7 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 			}
 		}
 	}`))
+	s.Nil(err)
 	cacheFile.Truncate(int64(p))
 	fsCache.Open()
 
@@ -169,7 +170,7 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 	}
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
-	mockPrompt := mock_prompt.NewMockPrompt(ctrl)
+	mockPrompt := mock_prompt.NewMockSelectPrompt(ctrl)
 	mockPrompt.
 		EXPECT().
 		Run().

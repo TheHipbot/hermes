@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	testCache  Cache
-	testStorer Storer
+	testCache  cache
+	testStorer storer
 )
 
 type CacheSuite struct {
@@ -29,7 +29,7 @@ func (s *CacheSuite) SetupTest() {
 	githubURL, _ := url.Parse("https://github.com")
 	gitLabURL, _ := url.Parse("https://gitlab.com")
 
-	testCache = Cache{
+	testCache = cache{
 		storer:  testStorer,
 		Version: cacheFormatVersion,
 		Remotes: map[string]*Remote{
@@ -74,8 +74,10 @@ func (s *CacheSuite) SetupTest() {
 }
 
 func (s *CacheSuite) TestNewClient() {
-	cache := NewCache(testStorer)
-	s.Equal(cache.storer, testStorer, "NewClient should return a cache object with the storer set")
+	c := NewCache(testStorer)
+	cs, ok := c.(*cache)
+	s.True(ok)
+	s.Equal(cs.storer, testStorer, "NewClient should return a cache object with the storer set")
 }
 
 func (s *CacheSuite) TestCacheOpenWithFileData() {
@@ -121,7 +123,7 @@ func (s *CacheSuite) TestCacheOpenWithFileData() {
 		}
 	}`))
 	s.Nil(err, "Cache should write successfully")
-	cache := &Cache{
+	cache := &cache{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -136,7 +138,7 @@ func (s *CacheSuite) TestCacheOpenWithFileData() {
 }
 
 func (s *CacheSuite) TestCacheOpenWithReadError() {
-	cache := &Cache{
+	cache := &cache{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -149,7 +151,7 @@ func (s *CacheSuite) TestCacheOpenWithInvalidData() {
 	testStorer.Write([]byte(`{
 	"version": "0.0.1",
 }`))
-	cache := &Cache{
+	cache := &cache{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -160,7 +162,7 @@ func (s *CacheSuite) TestCacheOpenWithInvalidData() {
 
 func (s *CacheSuite) TestCacheSave() {
 	s.Nil(testCache.Save(), "testCache should save successfully")
-	cache := &Cache{
+	cache := &cache{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -207,7 +209,7 @@ func (s *CacheSuite) TestCacheAddThenSave() {
 	s.Equal(repoCnt+1, len(testCache.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 	err := testCache.Save()
 	s.Nil(err, "Should save")
-	var temp Cache
+	var temp cache
 	raw, err := ioutil.ReadAll(testStorer)
 	s.Nil(err, "Should be unmarshallable")
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
@@ -245,7 +247,7 @@ func (s *CacheSuite) TestRemoveCacheAndSave() {
 	testCache.Save()
 	testCache.Remove("github.com/TheHipbot/dotfiles")
 	testCache.Save()
-	cache := Cache{
+	cache := cache{
 		storer: testStorer,
 	}
 	cache.Open()

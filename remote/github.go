@@ -38,6 +38,11 @@ func (gh *GitHub) Authenticate(a Auth) {
 	gh.Auth = a
 }
 
+// AuthType sets Auth object for driver
+func (gh *GitHub) AuthType() string {
+	return authToken
+}
+
 // GetRepos gets the repos for the github user
 func (gh *GitHub) GetRepos() ([]map[string]string, error) {
 	urlFormat := fmt.Sprintf("%s%s", gh.Host, gitHubUserRequestFmt)
