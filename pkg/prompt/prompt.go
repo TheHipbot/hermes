@@ -1,4 +1,4 @@
-//go:generate mockgen -package mock -destination ../mock/mock_prompt.go github.com/TheHipbot/hermes/prompt InputPrompt,SelectPrompt,Factory
+//go:generate mockgen -package mock -destination ../../mock/mock_prompt.go github.com/TheHipbot/hermes/pkg/prompt InputPrompt,SelectPrompt,Factory
 
 package prompt
 

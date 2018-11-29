@@ -21,7 +21,8 @@ import (
 
 	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
-	"github.com/TheHipbot/hermes/prompt"
+	"github.com/TheHipbot/hermes/pkg/prompt"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ var (
 	aliasFlg bool
 	configFS *fs.ConfigFS
 	fsCache  cache.Cache
+	store *storage.Storage
 	prompter prompt.Factory
 )
 
@@ -70,27 +72,27 @@ func getHandler(cmd *cobra.Command, args []string) {
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
 	// repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
-	fsCache.Open()
-	defer fsCache.Close()
+	store.Open()
+	defer store.Close()
 
 	// if err != nil {
 	// 	fmt.Println(err)
 	// 	os.Exit(1)
 	// }
 
-	var selectedRepo cache.Repo
-	cachedRepos := fsCache.Search(repoName)
+	var selectedRepo storage.Repository
+	cachedRepos := store.Search(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
 	} else if len(cachedRepos) == 0 {
-		selectedRepo = cache.Repo{
+		selectedRepo = storage.Repository{
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := fsCache.Add(repoName, viper.GetString("repo_path")); err != nil {
+		if err := store.AddRepo(repoName, viper.GetString("repo_path")); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
 		}
-		fsCache.Save()
+		store.Save()
 	} else {
 		p := prompt.CreateRepoSelectPrompt(prompter, cachedRepos)
 		i, _, err := p.Run()
@@ -176,5 +178,5 @@ func initConfig() {
 	if err != nil {
 		fmt.Println("Cache file could not be opened or created")
 	}
-	fsCache = cache.NewCache(cacheFile)
+	store = storage.NewStorage(cacheFile)
 }

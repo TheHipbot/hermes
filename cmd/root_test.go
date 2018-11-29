@@ -14,6 +14,7 @@ import (
 
 	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	mock_prompt "github.com/TheHipbot/hermes/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -34,17 +35,18 @@ func (s *RootCmdSuite) SetupTest() {
 	configFS.Setup()
 	cacheFile, _ = configFS.GetCacheFile()
 	fsCache = cache.NewCache(cacheFile)
+	store = storage.NewStorage(cacheFile)
 }
 
 func (s *RootCmdSuite) TearDownSuite() {
-	fsCache.Close()
+	store.Close()
 }
 
 func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	ctrl := gomock.NewController(s.T())
 	defer ctrl.Finish()
 	cacheFile.Seek(0, 0)
-	p, err := cacheFile.Write([]byte(`{
+	p, _ := cacheFile.Write([]byte(`{
 		"version": "0.0.1",
 		"remotes": {
 			"github.com": {
@@ -85,9 +87,8 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 			}
 		}
 	}`))
-	s.Nil(err)
 	cacheFile.Truncate(int64(p))
-	fsCache.Open()
+	store.Open()
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
 	mockPrompter.
@@ -153,7 +154,7 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 		}
 	}`))
 	cacheFile.Truncate(int64(p))
-	fsCache.Open()
+	store.Open()
 	repos := []cache.Repo{
 		cache.Repo{
 			Name: "github.com/TheHipbot/hermes",
@@ -170,7 +171,7 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 	}
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
-	mockPrompt := mock_prompt.NewMockSelectPrompt(ctrl)
+	mockPrompt := mock_prompt.NewMockInputPrompt(ctrl)
 	mockPrompt.
 		EXPECT().
 		Run().

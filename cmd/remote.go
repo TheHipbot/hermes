@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TheHipbot/hermes/prompt"
+	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/remote"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
