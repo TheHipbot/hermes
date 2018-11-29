@@ -39,14 +39,10 @@ vet:
 	$(GOCMD) vet ./...
 
 .PHONY: install
-install: ensure
+install: 
 	$(GOCMD) install
 
-.PHONY: ensure
-ensure:
-	dep ensure
-
-build: ensure $(SOURCES)
+build: $(SOURCES)
 	GOOS=${GOOS} GOARCH=${GOARCH} $(GOCMD) build -o ${BIN_DIR}${BINARY}
 
 .PHONY: generate
