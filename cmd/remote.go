@@ -72,15 +72,15 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 		fmt.Println("error retrieving repos")
 	}
 
-	fsCache.Open()
-	defer fsCache.Close()
-	defer fsCache.Save()
+	store.Open()
+	defer store.Save()
+	defer store.Close()
 
 	// TODO check if remote already present
-	fsCache.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName)
+	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName)
 
 	// add repos to cache
 	for _, r := range repos {
-		fsCache.Add(r["name"], viper.GetString("repo_path"))
+		store.AddRepository(r["name"], viper.GetString("repo_path"))
 	}
 }

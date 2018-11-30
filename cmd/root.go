@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/storage"
@@ -34,8 +33,7 @@ var (
 	cfgFile  string
 	aliasFlg bool
 	configFS *fs.ConfigFS
-	fsCache  cache.Cache
-	store *storage.Storage
+	store    storage.Storage
 	prompter prompt.Factory
 )
 
@@ -89,7 +87,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := store.AddRepo(repoName, viper.GetString("repo_path")); err != nil {
+		if err := store.AddRepository(repoName, viper.GetString("repo_path")); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
 		}
 		store.Save()
@@ -172,6 +170,7 @@ func initConfig() {
 	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
 	configFS = fs.NewConfigFS()
+
 	prompter = &prompt.Prompter{}
 
 	cacheFile, err := configFS.GetCacheFile()

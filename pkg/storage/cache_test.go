@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	testStorage Storage
+	testStorage storage
 	testStorer  storer
 )
 
@@ -29,7 +29,7 @@ func (s *StorageSuite) SetupTest() {
 	githubURL, _ := url.Parse("https://github.com")
 	gitLabURL, _ := url.Parse("https://gitlab.com")
 
-	testStorage = Storage{
+	testStorage = storage{
 		storer:  testStorer,
 		Version: cacheFormatVersion,
 		Remotes: map[string]*Remote{
@@ -75,8 +75,10 @@ func (s *StorageSuite) SetupTest() {
 
 func (s *StorageSuite) TestNewClient() {
 	store := NewStorage(testStorer)
+	impl, ok := store.(*storage)
 
-	s.Equal(store.storer, testStorer, "NewClient should return a cache object with the storer set")
+	s.True(ok)
+	s.Equal(impl.storer, testStorer, "NewClient should return a cache object with the storer set")
 }
 
 func (s *StorageSuite) TestStorageOpenWithFileData() {
@@ -122,7 +124,7 @@ func (s *StorageSuite) TestStorageOpenWithFileData() {
 		}
 	}`))
 	s.Nil(err, "Storage should write successfully")
-	storage := &Storage{
+	storage := &storage{
 		storer: testStorer,
 	}
 	storage.Open()
@@ -137,7 +139,7 @@ func (s *StorageSuite) TestStorageOpenWithFileData() {
 }
 
 func (s *StorageSuite) TestStorageOpenWithReadError() {
-	cache := &Storage{
+	cache := &storage{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -150,7 +152,7 @@ func (s *StorageSuite) TestStorageOpenWithInvalidData() {
 	testStorer.Write([]byte(`{
 	"version": "0.0.1",
 }`))
-	cache := &Storage{
+	cache := &storage{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -161,7 +163,7 @@ func (s *StorageSuite) TestStorageOpenWithInvalidData() {
 
 func (s *StorageSuite) TestCacheSave() {
 	s.Nil(testStorage.Save(), "testCache should save successfully")
-	cache := &Storage{
+	cache := &storage{
 		storer: testStorer,
 	}
 	cache.Open()
@@ -175,12 +177,12 @@ func (s *StorageSuite) TestCacheAdd() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepo("github.com/TheHipbot/weather", "/repos/")
+	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
 	results = testStorage.Search("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 
-	testStorage.AddRepo("github.com/TheHipbot/docker", "/repos/")
+	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
 	results = testStorage.Search("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
@@ -191,7 +193,7 @@ func (s *StorageSuite) TestCacheAddNewRemote() {
 
 	remote := testStorage.Remotes["gopkg.in"]
 	s.Nil(remote, "The remote should not exist")
-	testStorage.AddRepo("gopkg.in/src-d/go-billy.v4", "/repos/")
+	testStorage.AddRepository("gopkg.in/src-d/go-billy.v4", "/repos/")
 	results = testStorage.Search("billy")
 	s.Len(results, 1, "There should be the new repo")
 	remote = testStorage.Remotes["gopkg.in"]
@@ -202,19 +204,19 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepo("github.com/TheHipbot/weather", "/repos/")
+	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
 	results = testStorage.Search("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 	err := testStorage.Save()
 	s.Nil(err, "Should save")
-	var temp Storage
+	var temp storage
 	raw, err := ioutil.ReadAll(testStorer)
 	s.Nil(err, "Should be unmarshallable")
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
 	s.Equal(repoCnt+1, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
 
-	testStorage.AddRepo("github.com/TheHipbot/docker", "/repos/")
+	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
 	results = testStorage.Search("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
@@ -226,9 +228,9 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	s.Equal(repoCnt+2, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
 }
 
-func (s *StorageSuite) TestRemoveRepo() {
+func (s *StorageSuite) TestRemoveRepository() {
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.RemoveRepo("github.com/TheHipbot/dotfiles")
+	testStorage.RemoveRepository("github.com/TheHipbot/dotfiles")
 	s.Equal(repoCnt-1, len(testStorage.Remotes["github.com"].Repos), "github.com remote should have one less repo")
 	results := testStorage.Search("dotfiles")
 	s.Equal(len(results), 0, "There should no longer be a dotfiles repo")
@@ -236,7 +238,7 @@ func (s *StorageSuite) TestRemoveRepo() {
 
 func (s *StorageSuite) TestRemoveRepoNoRepo() {
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	err := testStorage.RemoveRepo("github.com/TheHipbot/docker")
+	err := testStorage.RemoveRepository("github.com/TheHipbot/docker")
 	s.NotNil(err, "There should be an error returned")
 	s.Equal(repoCnt, len(testStorage.Remotes["github.com"].Repos), "github.com remote should have the same number of repos")
 }
@@ -244,9 +246,9 @@ func (s *StorageSuite) TestRemoveRepoNoRepo() {
 func (s *StorageSuite) TestRemoveRepoAndSave() {
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
 	testStorage.Save()
-	testStorage.RemoveRepo("github.com/TheHipbot/dotfiles")
+	testStorage.RemoveRepository("github.com/TheHipbot/dotfiles")
 	testStorage.Save()
-	cache := Storage{
+	cache := storage{
 		storer: testStorer,
 	}
 	cache.Open()

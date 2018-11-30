@@ -27,6 +27,9 @@ var (
 func (suite *RemoteCmdSuite) SetupTest() {
 	suite.ctrl = gomock.NewController(suite.T())
 	suite.mockDriver = mock.NewMockDriver(suite.ctrl)
+	drivers = append(drivers, driver{
+		Name: "test",
+	})
 	remote.RegisterDriver("test", func() (remote.Driver, error) {
 		return suite.mockDriver, nil
 	})
@@ -43,10 +46,10 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 	prompter = mockPrompter
 	mockSelectPrompt := mock.NewMockSelectPrompt(ctrl)
 	mockInputPrompt := mock.NewMockInputPrompt(ctrl)
-	mockCache := mock.NewMockCache(ctrl)
+	mockStore := mock.NewMockStorage(ctrl)
 	defer ctrl.Finish()
 
-	fsCache = mockCache
+	store = mockStore
 	repos := []map[string]string{
 		{
 			"name": "github.com/thehipbot/hermes",
@@ -66,7 +69,7 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 		// create prompt for drivers
 		mockPrompter.
 			EXPECT().
-			CreateSelectPrompt(gomock.Any(), gomock.Eq(drivers), gomock.Any()).
+			CreateSelectPrompt(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(mockSelectPrompt).
 			Times(1),
 
@@ -74,7 +77,7 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 		mockSelectPrompt.
 			EXPECT().
 			Run().
-			Return(1, "test", nil).
+			Return(2, "test", nil).
 			Times(1),
 
 		suite.mockDriver.
@@ -110,33 +113,50 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 			Return(repos, nil).
 			Times(1),
 
-		mockCache.
+		mockStore.
+			EXPECT().
+			Open().
+			Return().
+			Times(1),
+
+		mockStore.
 			EXPECT().
 			AddRemote("https://github.com", "github.com").
 			Return(nil).
 			Times(1),
 	)
 
-	mockCache.
+	mockStore.
 		EXPECT().
-		Add("github.com/thehipbot/hermes", testRepoPath).
+		AddRepository("github.com/thehipbot/hermes", testRepoPath).
 		Return(nil).
 		Times(1)
 
-	mockCache.
+	mockStore.
 		EXPECT().
-		Add("github.com/thehipbot/dotfiles", testRepoPath).
+		AddRepository("github.com/thehipbot/dotfiles", testRepoPath).
 		Return(nil).
 		Times(1)
 
-	mockCache.
+	mockStore.
 		EXPECT().
-		Add("github.com/carsdotcom/bitcar", testRepoPath).
+		AddRepository("github.com/carsdotcom/bitcar", testRepoPath).
+		Return(nil).
+		Times(1)
+
+	mockStore.
+		EXPECT().
+		Save().
+		Return(nil).
+		Times(1)
+
+	mockStore.
+		EXPECT().
+		Close().
 		Return(nil).
 		Times(1)
 
 	remoteAddHandler(mockCmd, []string{"github.com"})
-
 }
 
 func TestRemoteCmdSuite(t *testing.T) {

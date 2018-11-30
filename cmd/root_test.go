@@ -12,10 +12,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
-	"github.com/TheHipbot/hermes/pkg/storage"
 	mock_prompt "github.com/TheHipbot/hermes/mock"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -34,7 +33,6 @@ func (s *RootCmdSuite) SetupTest() {
 	}
 	configFS.Setup()
 	cacheFile, _ = configFS.GetCacheFile()
-	fsCache = cache.NewCache(cacheFile)
 	store = storage.NewStorage(cacheFile)
 }
 
@@ -155,16 +153,16 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 	}`))
 	cacheFile.Truncate(int64(p))
 	store.Open()
-	repos := []cache.Repo{
-		cache.Repo{
+	repos := []storage.Repository{
+		storage.Repository{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/repos/github.com/TheHipbot/hermes",
 		},
-		cache.Repo{
+		storage.Repository{
 			Name: "github.com/TheHipbot/dotfiles",
 			Path: "/repos/github.com/TheHipbot/dotfiles",
 		},
-		cache.Repo{
+		storage.Repository{
 			Name: "github.com/TheHipbot/dockerfiles",
 			Path: "/repos/github.com/TheHipbot/dockerfiles",
 		},

@@ -1,3 +1,5 @@
+//go:generate mockgen -package mock -destination ../../mock/mock_storage.go github.com/TheHipbot/hermes/pkg/storage Storage
+
 package storage
 
 import (
@@ -21,30 +23,41 @@ type storer interface {
 	Truncate(size int64) error
 }
 
-type Storage struct {
+// Storage interface to open and save repo Storage
+type Storage interface {
+	Open()
+	Save() error
+	Close() error
+	AddRepository(name, path string) error
+	RemoveRepository(name string) error
+	AddRemote(url, name string) error
+	Search(needle string) []Repository
+}
+
+type storage struct {
 	storer  storer
 	Version string             `json:"version"`
 	Remotes map[string]*Remote `json:"remotes"`
 }
 
 // NewStorage creates a cache then returns it
-func NewStorage(storer storer) *Storage {
-	return &Storage{
+func NewStorage(storer storer) Storage {
+	return &storage{
 		storer: storer,
 	}
 }
 
 // Open the cache from the cache.json file in config
 // directory
-func (s *Storage) Open() {
+func (s *storage) Open() {
 	_, err := s.storer.Seek(0, 0)
 	raw, err := ioutil.ReadAll(s.storer)
-	var result Storage
+	var result storage
 	if err != nil {
 		s.Version = cacheFormatVersion
 		s.Remotes = make(map[string]*Remote)
 	} else {
-		result = Storage{}
+		result = storage{}
 		if err := json.Unmarshal(raw, &result); err != nil {
 			s.Version = cacheFormatVersion
 			s.Remotes = make(map[string]*Remote)
@@ -56,7 +69,7 @@ func (s *Storage) Open() {
 }
 
 // Save cache to ConfigFS
-func (s *Storage) Save() error {
+func (s *storage) Save() error {
 	raw, err := json.Marshal(s)
 	if err != nil {
 		return err
@@ -79,12 +92,12 @@ func (s *Storage) Save() error {
 }
 
 // Close cache storer
-func (s *Storage) Close() error {
+func (s *storage) Close() error {
 	return s.storer.Close()
 }
 
-// AddRepo a repo to the cache
-func (s *Storage) AddRepo(name, path string) error {
+// AddRepository a repo to the cache
+func (s *storage) AddRepository(name, path string) error {
 	repoPath := fmt.Sprintf("%s%s", path, name)
 	remote := strings.Split(name, "/")[0]
 
@@ -114,8 +127,8 @@ func (s *Storage) AddRepo(name, path string) error {
 	return nil
 }
 
-// RemoveRepo a repo from the cache
-func (s *Storage) RemoveRepo(name string) error {
+// RemoveRepository a repo from the cache
+func (s *storage) RemoveRepository(name string) error {
 	found := false
 	remote := strings.Split(name, "/")[0]
 
@@ -137,7 +150,7 @@ func (s *Storage) RemoveRepo(name string) error {
 }
 
 // AddRemote adds a remote to the cache
-func (s *Storage) AddRemote(url, name string) error {
+func (s *storage) AddRemote(url, name string) error {
 	// type Remote struct {
 	// 	Name     string            `json:"name"`
 	// 	URL      string            `json:"url"`
@@ -164,7 +177,7 @@ func (s *Storage) AddRemote(url, name string) error {
 
 // Search will search the cache for any repos that match the
 // needle string
-func (s *Storage) Search(needle string) []Repository {
+func (s *storage) Search(needle string) []Repository {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repository
 	for _, remote := range s.Remotes {
