@@ -73,8 +73,8 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	}
 
 	store.Open()
-	defer store.Save()
 	defer store.Close()
+	defer store.Save()
 
 	// TODO check if remote already present
 	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName)

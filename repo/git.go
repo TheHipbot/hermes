@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"os"
 
 	billy "gopkg.in/src-d/go-billy.v4"
@@ -20,7 +21,7 @@ func init() {
 // GitRepository holds info for git repos and
 // implements the Repository interface
 type GitRepository struct {
-	fs   billy.Filesystem
+	Fs   billy.Filesystem
 	Name string
 	URL  string
 }
@@ -28,7 +29,7 @@ type GitRepository struct {
 // NewGitRepository creates a GitRepository
 func NewGitRepository(name, url string) Repository {
 	return &GitRepository{
-		fs:   appFs,
+		Fs:   appFs,
 		Name: name,
 		URL:  url,
 	}
@@ -36,8 +37,9 @@ func NewGitRepository(name, url string) Repository {
 
 // Clone git repository to path
 func (gr *GitRepository) Clone(path string) error {
-	repoFs, _ := appFs.Chroot(path)
+	repoFs, _ := gr.Fs.Chroot(path)
 	dot, _ := repoFs.Chroot(".git")
+	fmt.Println(path)
 	storer, err := filesystem.NewStorage(dot)
 	if err != nil {
 		os.Exit(1)

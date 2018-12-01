@@ -144,17 +144,19 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 		Return(nil).
 		Times(1)
 
-	mockStore.
-		EXPECT().
-		Save().
-		Return(nil).
-		Times(1)
+	gomock.InOrder(
+		mockStore.
+			EXPECT().
+			Save().
+			Return(nil).
+			Times(1),
 
-	mockStore.
-		EXPECT().
-		Close().
-		Return(nil).
-		Times(1)
+		mockStore.
+			EXPECT().
+			Close().
+			Return(nil).
+			Times(1),
+	)
 
 	remoteAddHandler(mockCmd, []string{"github.com"})
 }

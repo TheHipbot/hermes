@@ -33,7 +33,9 @@ func (s *RootCmdSuite) SetupTest() {
 	}
 	configFS.Setup()
 	cacheFile, _ = configFS.GetCacheFile()
+	appFs = memfs.New()
 	store = storage.NewStorage(cacheFile)
+	viper.Set("repo_path", "/repos") 
 }
 
 func (s *RootCmdSuite) TearDownSuite() {
@@ -98,12 +100,16 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	getHandler(cmd, []string{"github.com/TheHipbot/hermes"})
 	target := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("target_file"))
 	stat, _ := configFS.FS.Stat(target)
+	gitFileStat, err := appFs.Stat(fmt.Sprintf("%s/%s", viper.GetString("repo_path"), "github.com/TheHipbot/hermes"))
+	
+	s.Nil(err)
 	targetFile, err := configFS.FS.Open(target)
 	defer targetFile.Close()
 	content := make([]byte, stat.Size())
 	targetFile.Read(content)
 	s.Nil(err, "Target file should exist")
 	s.Equal(string(content), "/repos/github.com/TheHipbot/hermes", "Get should find one repo and set target path")
+	s.True(gitFileStat.IsDir(), ".git folder in repo should exist")
 }
 
 func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
@@ -169,7 +175,7 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 	}
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
-	mockPrompt := mock_prompt.NewMockInputPrompt(ctrl)
+	mockPrompt := mock_prompt.NewMockSelectPrompt(ctrl)
 	mockPrompt.
 		EXPECT().
 		Run().

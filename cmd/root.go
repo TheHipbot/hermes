@@ -24,6 +24,8 @@ import (
 	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
+	billy "gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/osfs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"
@@ -32,6 +34,7 @@ import (
 var (
 	cfgFile  string
 	aliasFlg bool
+	appFs billy.Filesystem
 	configFS *fs.ConfigFS
 	store    storage.Storage
 	prompter prompt.Factory
@@ -102,6 +105,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 	}
 
 	repo := repo.GitRepository{
+		Fs: appFs,
 		Name: selectedRepo.Name,
 		URL:  fmt.Sprintf("https://%s", selectedRepo.Name),
 	}
@@ -170,6 +174,7 @@ func initConfig() {
 	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
 	configFS = fs.NewConfigFS()
+	appFs = osfs.New("")
 
 	prompter = &prompt.Prompter{}
 
