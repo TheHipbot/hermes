@@ -12,9 +12,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
 	mock_prompt "github.com/TheHipbot/hermes/mock"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -33,11 +33,13 @@ func (s *RootCmdSuite) SetupTest() {
 	}
 	configFS.Setup()
 	cacheFile, _ = configFS.GetCacheFile()
-	fsCache = cache.NewCache(cacheFile)
+	appFs = memfs.New()
+	store = storage.NewStorage(cacheFile)
+	viper.Set("repo_path", "/repos") 
 }
 
 func (s *RootCmdSuite) TearDownSuite() {
-	fsCache.Close()
+	store.Close()
 }
 
 func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
@@ -86,7 +88,7 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 		}
 	}`))
 	cacheFile.Truncate(int64(p))
-	fsCache.Open()
+	store.Open()
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
 	mockPrompter.
@@ -98,12 +100,16 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	getHandler(cmd, []string{"github.com/TheHipbot/hermes"})
 	target := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("target_file"))
 	stat, _ := configFS.FS.Stat(target)
+	gitFileStat, err := appFs.Stat(fmt.Sprintf("%s/%s", viper.GetString("repo_path"), "github.com/TheHipbot/hermes"))
+	
+	s.Nil(err)
 	targetFile, err := configFS.FS.Open(target)
 	defer targetFile.Close()
 	content := make([]byte, stat.Size())
 	targetFile.Read(content)
 	s.Nil(err, "Target file should exist")
 	s.Equal(string(content), "/repos/github.com/TheHipbot/hermes", "Get should find one repo and set target path")
+	s.True(gitFileStat.IsDir(), ".git folder in repo should exist")
 }
 
 func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
@@ -152,24 +158,24 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 		}
 	}`))
 	cacheFile.Truncate(int64(p))
-	fsCache.Open()
-	repos := []cache.Repo{
-		cache.Repo{
+	store.Open()
+	repos := []storage.Repository{
+		storage.Repository{
 			Name: "github.com/TheHipbot/hermes",
 			Path: "/repos/github.com/TheHipbot/hermes",
 		},
-		cache.Repo{
+		storage.Repository{
 			Name: "github.com/TheHipbot/dotfiles",
 			Path: "/repos/github.com/TheHipbot/dotfiles",
 		},
-		cache.Repo{
+		storage.Repository{
 			Name: "github.com/TheHipbot/dockerfiles",
 			Path: "/repos/github.com/TheHipbot/dockerfiles",
 		},
 	}
 
 	mockPrompter := mock_prompt.NewMockFactory(ctrl)
-	mockPrompt := mock_prompt.NewMockPrompt(ctrl)
+	mockPrompt := mock_prompt.NewMockSelectPrompt(ctrl)
 	mockPrompt.
 		EXPECT().
 		Run().

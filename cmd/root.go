@@ -17,14 +17,15 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 
-	"github.com/TheHipbot/hermes/cache"
 	"github.com/TheHipbot/hermes/fs"
-	"github.com/TheHipbot/hermes/prompt"
+	"github.com/TheHipbot/hermes/pkg/prompt"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
+	billy "gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/osfs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"
@@ -33,8 +34,9 @@ import (
 var (
 	cfgFile  string
 	aliasFlg bool
+	appFs billy.Filesystem
 	configFS *fs.ConfigFS
-	fsCache  *cache.Cache
+	store    storage.Storage
 	prompter prompt.Factory
 )
 
@@ -64,47 +66,53 @@ var getCmd = &cobra.Command{
 }
 
 func getHandler(cmd *cobra.Command, args []string) {
-	repoName := args[0]
-	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
-	repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
-	fsCache.Open()
-	defer fsCache.Close()
-
-	if err != nil {
-		fmt.Println(err)
+	if len(args) == 0 {
+		fmt.Println("Requires repo as an argument")
 		os.Exit(1)
 	}
+	repoName := args[0]
+	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
+	// repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
+	store.Open()
+	defer store.Close()
 
-	var selectedRepo cache.Repo
-	cachedRepos := fsCache.Search(repoName)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+
+	var selectedRepo storage.Repository
+	cachedRepos := store.Search(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
 	} else if len(cachedRepos) == 0 {
-		repo := repo.GitRepository{
-			Name: repoName,
-			URL:  repoURL.String(),
-		}
-
-		if err := repo.Clone(pathToRepo); err != nil && err != git.ErrRepositoryAlreadyExists {
-			fmt.Printf("Error cloning repo %s\n%s\n", pathToRepo, err)
-			os.Exit(1)
-		}
-		selectedRepo = cache.Repo{
+		selectedRepo = storage.Repository{
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := fsCache.Add(repoName, viper.GetString("repo_path")); err != nil {
+		if err := store.AddRepository(repoName, viper.GetString("repo_path")); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
 		}
-		fsCache.Save()
+		store.Save()
 	} else {
-		p := prompt.NewRepoSelectPrompt(prompter, cachedRepos)
+		p := prompt.CreateRepoSelectPrompt(prompter, cachedRepos)
 		i, _, err := p.Run()
 		selectedRepo = cachedRepos[i]
 		if err != nil {
 			fmt.Printf("Error selecting repo\n%s\n", err)
 			os.Exit(1)
 		}
+	}
+
+	repo := repo.GitRepository{
+		Fs: appFs,
+		Name: selectedRepo.Name,
+		URL:  fmt.Sprintf("https://%s", selectedRepo.Name),
+	}
+
+	if err := repo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
+		fmt.Printf("Error cloning repo %s\n%s\n", selectedRepo.Path, err)
+		os.Exit(1)
 	}
 
 	if err := configFS.SetTarget(selectedRepo.Path); err != nil {
@@ -136,10 +144,12 @@ func init() {
 	viper.SetDefault("config_path", fmt.Sprintf("%s/.hermes/", home))
 	viper.SetDefault("target_file", ".hermes_target")
 	viper.SetDefault("cache_file", "cache.json")
+	viper.SetDefault("remotes_file", "remotes.json")
 
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
+	rootCmd.AddCommand(remoteCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -164,11 +174,13 @@ func initConfig() {
 	viper.ReadInConfig()
 	viper.AutomaticEnv() // read in environment variables that match
 	configFS = fs.NewConfigFS()
+	appFs = osfs.New("")
+
 	prompter = &prompt.Prompter{}
 
 	cacheFile, err := configFS.GetCacheFile()
 	if err != nil {
 		fmt.Println("Cache file could not be opened or created")
 	}
-	fsCache = cache.NewCache(cacheFile)
+	store = storage.NewStorage(cacheFile)
 }

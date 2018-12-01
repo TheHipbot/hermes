@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../mock/mock_driver.go github.com/TheHipbot/hermes/remote Driver
 package remote
 
 import "errors"
@@ -7,6 +8,7 @@ type Driver interface {
 	GetRepos() ([]map[string]string, error)
 	SetHost(host string)
 	Authenticate(a Auth)
+	AuthType() string
 }
 
 // Auth struct to hold credentials to
@@ -19,6 +21,14 @@ type Auth struct {
 
 var (
 	creators map[string]func() (Driver, error)
+
+	// auth types
+	authToken = "token"
+
+	// ErrNotImplemented error when driver requested is not implemented
+	ErrNotImplemented = errors.New("Driver not implemented")
+	// ErrInvalidOpts error when options for driver are invald
+	ErrInvalidOpts = errors.New("Invalid driver options")
 )
 
 func init() {
@@ -27,11 +37,17 @@ func init() {
 	}
 }
 
-// CreateDriver creates a driver
-func CreateDriver(t string) (Driver, error) {
+// NewDriver creates a driver
+func NewDriver(t string) (Driver, error) {
 	c, ok := creators[t]
 	if !ok {
-		return nil, errors.New("Driver not implemented")
+		return nil, ErrNotImplemented
 	}
 	return c()
+}
+
+// RegisterDriver registers a new driver from the given name and driver returning
+// function
+func RegisterDriver(name string, creator func() (Driver, error)) {
+	creators[name] = creator
 }
