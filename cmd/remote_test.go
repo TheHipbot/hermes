@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/TheHipbot/hermes/mock"
-	"github.com/TheHipbot/hermes/remote"
+	"github.com/TheHipbot/hermes/pkg/remote"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

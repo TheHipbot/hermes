@@ -12,8 +12,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"github.com/TheHipbot/hermes/fs"
 	mock_prompt "github.com/TheHipbot/hermes/mock"
+	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/stretchr/testify/suite"
 )
@@ -35,7 +35,7 @@ func (s *RootCmdSuite) SetupTest() {
 	cacheFile, _ = configFS.GetCacheFile()
 	appFs = memfs.New()
 	store = storage.NewStorage(cacheFile)
-	viper.Set("repo_path", "/repos") 
+	viper.Set("repo_path", "/repos")
 }
 
 func (s *RootCmdSuite) TearDownSuite() {
@@ -101,7 +101,7 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 	target := fmt.Sprintf("%s%s", viper.GetString("config_path"), viper.GetString("target_file"))
 	stat, _ := configFS.FS.Stat(target)
 	gitFileStat, err := appFs.Stat(fmt.Sprintf("%s/%s", viper.GetString("repo_path"), "github.com/TheHipbot/hermes"))
-	
+
 	s.Nil(err)
 	targetFile, err := configFS.FS.Open(target)
 	defer targetFile.Close()
