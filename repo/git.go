@@ -7,6 +7,7 @@ import (
 	billy "gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/osfs"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/cache"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
@@ -40,12 +41,9 @@ func (gr *GitRepository) Clone(path string) error {
 	repoFs, _ := gr.Fs.Chroot(path)
 	dot, _ := repoFs.Chroot(".git")
 	fmt.Println(path)
-	storer, err := filesystem.NewStorage(dot)
-	if err != nil {
-		os.Exit(1)
-	}
+	storer := filesystem.NewStorage(dot, cache.NewObjectLRU(cache.DefaultMaxSize))
 
-	_, err = git.Clone(storer, repoFs, &git.CloneOptions{
+	_, err := git.Clone(storer, repoFs, &git.CloneOptions{
 		URL:      gr.URL,
 		Progress: os.Stdout,
 	})
