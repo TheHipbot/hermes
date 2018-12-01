@@ -19,22 +19,22 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TheHipbot/hermes/fs"
+	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
+	"github.com/TheHipbot/hermes/pkg/repo"
 	"github.com/TheHipbot/hermes/pkg/storage"
-	"github.com/TheHipbot/hermes/repo"
 	homedir "github.com/mitchellh/go-homedir"
-	billy "gopkg.in/src-d/go-billy.v4"
-	"gopkg.in/src-d/go-billy.v4/osfs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	billy "gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/osfs"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
 var (
 	cfgFile  string
 	aliasFlg bool
-	appFs billy.Filesystem
+	appFs    billy.Filesystem
 	configFS *fs.ConfigFS
 	store    storage.Storage
 	prompter prompt.Factory
@@ -105,7 +105,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 	}
 
 	repo := repo.GitRepository{
-		Fs: appFs,
+		Fs:   appFs,
 		Name: selectedRepo.Name,
 		URL:  fmt.Sprintf("https://%s", selectedRepo.Name),
 	}

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/TheHipbot/hermes/pkg/prompt"
-	"github.com/TheHipbot/hermes/remote"
+	"github.com/TheHipbot/hermes/pkg/remote"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
