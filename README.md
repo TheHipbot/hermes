@@ -64,7 +64,7 @@ Here is a list of the current supported config keys and values along with their 
 repo_path: /Users/jeremychambers/test-repos/
 config_path: /Users/jeremychambers/.hermes-config/
 cache_file: cached-repos.json
-target_file: .hermes_target_dir
+target_file: .hermes_target_file
 ```
 
 ## Usage
