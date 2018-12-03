@@ -1,11 +1,15 @@
 package remote
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 var (
 	// URL format for gitlab repo requests
 	defaultGitlabAPIHost = "https://gitlab.com"
-	gitlabUserRequestFmt = "/api/v4/projects?membership=true&per_page=100&private_token=%s&page=%d"
+	gitlabUserRequestFmt = "/api/v4/projects?per_page=20&private_token=%s&page=%d"
 )
 
 func gitlabCreator(opts *DriverOpts) (Driver, error) {
@@ -39,13 +43,18 @@ func (gl *Gitlab) AuthType() string {
 
 // GetRepos gets the repos for the github user
 func (gl *Gitlab) GetRepos() ([]map[string]string, error) {
-	// urlFormat := fmt.Sprintf("%s%s", gl.Host, gitlabUserRequestFmt)
+	urlFormat := fmt.Sprintf("%s%s", gl.Host, gitlabUserRequestFmt)
 	if gl.Auth.Token == "" && gl.Auth.Username == "" {
 		return nil, errors.New("Auth is empty")
 	}
 
-	// page := 1
+	page := 1
 	accumulator := []map[string]string{}
-	// return getRepoHelper(fmt.Sprintf(urlFormat, gl.Auth.Token, page), accumulator)
-	return accumulator, nil
+	return getRepoHelper(fmt.Sprintf(urlFormat, gl.Auth.Token, page), accumulator, func(item map[string]interface{}) map[string]string {
+		entry := make(map[string]string, 3)
+		url := item["web_url"].(string)
+		entry["url"] = url
+		entry["name"] = strings.Split(url, "://")[1]
+		return entry
+	})
 }

@@ -3,14 +3,17 @@ package remote
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"time"
 )
 
 func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]interface{}) map[string]string) ([]map[string]string, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 	res, err := client.Get(url)
+
+	fmt.Println(url)
 	if err != nil {
 		return acc, err
 	}
@@ -18,11 +21,8 @@ func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]i
 
 	repos := make([]map[string]interface{}, 20)
 	json.NewDecoder(res.Body).Decode(&repos)
+
 	for _, repo := range repos {
-		// entry := make(map[string]string, 3)
-		// url := repo["html_url"].(string)
-		// entry["url"] = url
-		// entry["name"] = strings.Split(url, "://")[1]
 		acc = append(acc, mapper(repo))
 	}
 
@@ -34,9 +34,11 @@ func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]i
 }
 
 func parseLinkHeader(header string) (string, error) {
-	rg := regexp.MustCompile("<(.+)>; rel=\"next\",")
+	rg := regexp.MustCompile(".*<(.+)>;(?: ?)rel=\"next\"(?:|.+)$")
 	next := rg.FindStringSubmatch(header)
-	if len(next) > 0 {
+	fmt.Printf("len: %d\n", len(next))
+	if len(next) > 1 {
+		fmt.Printf("next: %s\n", next[1])
 		return next[1], nil
 	}
 	return "", errors.New("No next link found")

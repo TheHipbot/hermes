@@ -85,7 +85,7 @@ func (s *PromptRepoSuite) TestCreateDriverSelectPrompt() {
 		"bitbucket",
 	}
 	prompter.
-		On("CreateSelectPrompt", "Select remote server type", types, selectRepoTemplates).
+		On("CreateSelectPrompt", "Select remote server type ", types, selectRepoTemplates).
 		Return(&promptui.Select{
 			Label:     "Select a repo",
 			Items:     types,
@@ -104,7 +104,7 @@ func (s *PromptRepoSuite) TestCreateDriverSelectPrompt() {
 func (s *PromptRepoSuite) TestCreateTokenInputPrompt() {
 	prompter := new(prompterMock)
 	prompter.
-		On("CreateInputPrompt", "Enter auth token").
+		On("CreateInputPrompt", "Enter auth token ").
 		Return(&promptui.Prompt{
 			Label: "Enter auth token",
 		}).
