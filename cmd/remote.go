@@ -53,7 +53,7 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	driver, _ := remote.NewDriver(drivers[i].Name)
+	driver, _ := remote.NewDriver(drivers[i].Name, &remote.DriverOpts{})
 
 	auth := remote.Auth{}
 	switch driver.AuthType() {

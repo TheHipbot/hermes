@@ -13,19 +13,32 @@ type DriverSuite struct {
 func (s *DriverSuite) TestNewDriverOptions() {
 	expectedDrivers := []string{
 		"github",
+		"gitlab",
 	}
 
 	for _, t := range expectedDrivers {
-		d, err := NewDriver(t)
+		d, err := NewDriver(t, &DriverOpts{})
 		s.Nil(err, "Driver should be create without error")
 		s.NotNil(d, "Driver should not be nil")
 	}
 }
 
 func (s *DriverSuite) TestNewDriverNotExists() {
-	d, err := NewDriver("blah")
+	d, err := NewDriver("blah", &DriverOpts{})
 	s.Nil(d, "Driver does not exist")
 	s.NotNil(err, "Error should be returned")
+}
+
+func (s *DriverSuite) TestRegisterDriver() {
+	d, err := NewDriver("test", &DriverOpts{})
+	s.Nil(d, "Driver does not exist")
+	s.NotNil(err, "Error should be returned")
+
+	RegisterDriver("test", gitlabCreator)
+	d, err = NewDriver("test", &DriverOpts{})
+	s.NotNil(d, "Driver should exist")
+	gl := d.(*Gitlab)
+	s.NotNil(gl, "Should be a gitlab driver")
 }
 
 func TestDriverSuite(t *testing.T) {

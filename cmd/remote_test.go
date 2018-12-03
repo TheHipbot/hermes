@@ -30,7 +30,7 @@ func (suite *RemoteCmdSuite) SetupTest() {
 	drivers = append(drivers, driver{
 		Name: "test",
 	})
-	remote.RegisterDriver("test", func() (remote.Driver, error) {
+	remote.RegisterDriver("test", func(opts *remote.DriverOpts) (remote.Driver, error) {
 		return suite.mockDriver, nil
 	})
 	viper.Set("repo_path", testRepoPath)

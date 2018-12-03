@@ -14,23 +14,25 @@ type GitHubRemoteSuite struct {
 }
 
 func (s *GitHubRemoteSuite) TestGitHubCreator() {
-	d, err := githubCreator()
+	opts := &DriverOpts{}
+	d, err := githubCreator(opts)
 	s.Nil(err, "Should return without error")
 	s.IsType(d, &GitHub{}, "Driver should be GitHub type")
 	gh := d.(*GitHub)
 	s.Equal(defaultGitHubAPIHost, gh.Host, "GitHub Driver should be created with default host")
+	s.Equal(opts, gh.Opts, "Options should be passed into Github struct")
 }
 
 func (s *GitHubRemoteSuite) TestSetHost() {
-	d, err := githubCreator()
+	d, err := githubCreator(&DriverOpts{})
 	s.Nil(err, "Creator should not return error")
 	gh := d.(*GitHub)
 	d.SetHost("http://test.github.com")
 	s.Equal("http://test.github.com", gh.Host, "Host should be set")
 }
 
-func (s *GitHubRemoteSuite) TestSetAuth() {
-	d, err := githubCreator()
+func (s *GitHubRemoteSuite) TestGitHubSetAuth() {
+	d, err := githubCreator(&DriverOpts{})
 	s.Nil(err, "Creator should not return error")
 	testAuth := Auth{
 		Token: "1234abc",
@@ -40,13 +42,13 @@ func (s *GitHubRemoteSuite) TestSetAuth() {
 	s.Equal(testAuth, gh.Auth, "Auth should be set")
 }
 
-func (s *GitHubRemoteSuite) TestAuthType() {
-	d, err := githubCreator()
+func (s *GitHubRemoteSuite) TestGitHubAuthType() {
+	d, err := githubCreator(&DriverOpts{})
 	s.Nil(err, "Creator should not return error")
 	s.Equal(authToken, d.AuthType(), "AuthType should be authToken")
 }
 
-func (s *GitHubRemoteSuite) TestGetRepos() {
+func (s *GitHubRemoteSuite) TestGitHubGetRepos() {
 	reqNum := 0
 	testToken := "1234abcd"
 	testURL := ""
