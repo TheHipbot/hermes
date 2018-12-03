@@ -53,8 +53,8 @@ func (s *GitHubRemoteSuite) TestGitHubGetRepos() {
 	testToken := "1234abcd"
 	testURL := ""
 	linkHeaders := []string{
-		`<%s/user/repos?access_token=%s&page=2>; rel="next", <%s/user/repos?access_token=%s&page=2>; rel="last"`,
-		`<%s/user/repos?access_token=%s&page=1>; rel="prev", <%s/user/repos?access_token=%s&page=1>; rel="first"`,
+		`<%s/user/repos?access_token=%s&page=2>;rel="next", <%s/user/repos?access_token=%s&page=2>; rel="last"`,
+		`<%s/user/repos?access_token=%s&page=1>; rel="prev",<%s/user/repos?access_token=%s&page=1>; rel="first"`,
 	}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Equal(testToken, r.URL.Query()["access_token"][0], "The requests should have the correct access token")
