@@ -21,8 +21,8 @@ type Auth struct {
 
 // DriverOpts provide options for which repos to get
 type DriverOpts struct {
-	MemberOnly bool
-	Starred    bool
+	AllRepos bool
+	Starred  bool
 }
 
 var (

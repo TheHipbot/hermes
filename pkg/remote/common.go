@@ -36,9 +36,7 @@ func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]i
 func parseLinkHeader(header string) (string, error) {
 	rg := regexp.MustCompile(".*<(.+)>;(?: ?)rel=\"next\"(?:|.+)$")
 	next := rg.FindStringSubmatch(header)
-	fmt.Printf("len: %d\n", len(next))
 	if len(next) > 1 {
-		fmt.Printf("next: %s\n", next[1])
 		return next[1], nil
 	}
 	return "", errors.New("No next link found")

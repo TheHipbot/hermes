@@ -58,7 +58,7 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	}
 
 	driver, _ := remote.NewDriver(drivers[i].Name, &remote.DriverOpts{
-		MemberOnly: getAllRepos,
+		AllRepos: getAllRepos,
 	})
 	driver.SetHost(remoteName)
 	auth := remote.Auth{}

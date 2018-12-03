@@ -52,11 +52,12 @@ func (s *GitlabRemoteSuite) TestGetRepos() {
 	testToken := "1234abcd"
 	testURL := ""
 	linkHeaders := []string{
-		`<%s/api/v4/projects?per_page=20&private_token=%s&page=1>;rel="prev", <%s/api/v4/projects?per_page=20&private_token=%s&page=2>;rel="next"`,
-		`<%s/api/v4/projects?per_page=20&private_token=%s&page=1>; rel="prev", <%s/api/v4/projects?per_page=20&private_token=%s&page=1>; rel="first"`,
+		`<%s/api/v4/projects?membership=true&per_page=20&private_token=%s&page=1>;rel="prev", <%s/api/v4/projects?membership=true&per_page=20&private_token=%s&page=2>;rel="next"`,
+		`<%s/api/v4/projects?membership=true&per_page=20&private_token=%s&page=1>; rel="prev", <%s/api/v4/projects?membership=true&per_page=20&private_token=%s&page=1>; rel="first"`,
 	}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Equal(testToken, r.URL.Query()["private_token"][0], "The requests should have the correct access token")
+		s.Equal("true", r.URL.Query()["membership"][0], "The requests should have the correct membership value")
 		w.Header().Set("Link", fmt.Sprintf(linkHeaders[reqNum], testURL, testToken, testURL, testToken))
 		fmt.Fprintln(w, gitlabTestResponses[reqNum])
 		reqNum++
@@ -69,6 +70,39 @@ func (s *GitlabRemoteSuite) TestGetRepos() {
 			Token: testToken,
 		},
 		Host: ts.URL,
+		Opts: &DriverOpts{},
+	}
+	res, err := gl.GetRepos()
+	s.Nil(err, "No error should be returned")
+	s.Equal(gitlabTestResult, res, "Results from GetRepos should match the mock responses")
+}
+
+func (s *GitlabRemoteSuite) TestGetReposWithMemberOnly() {
+	reqNum := 0
+	testToken := "1234abcd"
+	testURL := ""
+	linkHeaders := []string{
+		`<%s/api/v4/projects?membership=false&per_page=20&private_token=%s&page=1>;rel="prev", <%s/api/v4/projects?membership=false&per_page=20&private_token=%s&page=2>;rel="next"`,
+		`<%s/api/v4/projects?membership=false&per_page=20&private_token=%s&page=1>; rel="prev", <%s/api/v4/projects?membership=false&per_page=20&private_token=%s&page=1>; rel="first"`,
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(testToken, r.URL.Query()["private_token"][0], "The requests should have the correct access token")
+		s.Equal("false", r.URL.Query()["membership"][0], "The requests should have the correct membership value")
+		w.Header().Set("Link", fmt.Sprintf(linkHeaders[reqNum], testURL, testToken, testURL, testToken))
+		fmt.Fprintln(w, gitlabTestResponses[reqNum])
+		reqNum++
+	}))
+	defer ts.Close()
+	testURL = ts.URL
+
+	gl := &Gitlab{
+		Auth: Auth{
+			Token: testToken,
+		},
+		Host: ts.URL,
+		Opts: &DriverOpts{
+			AllRepos: true,
+		},
 	}
 	res, err := gl.GetRepos()
 	s.Nil(err, "No error should be returned")

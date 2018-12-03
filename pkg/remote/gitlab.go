@@ -9,7 +9,7 @@ import (
 var (
 	// URL format for gitlab repo requests
 	defaultGitlabAPIHost = "https://gitlab.com"
-	gitlabUserRequestFmt = "/api/v4/projects?per_page=20&private_token=%s&page=%d"
+	gitlabUserRequestFmt = "/api/v4/projects?membership=%t&per_page=20&private_token=%s&page=%d"
 )
 
 func gitlabCreator(opts *DriverOpts) (Driver, error) {
@@ -50,7 +50,7 @@ func (gl *Gitlab) GetRepos() ([]map[string]string, error) {
 
 	page := 1
 	accumulator := []map[string]string{}
-	return getRepoHelper(fmt.Sprintf(urlFormat, gl.Auth.Token, page), accumulator, func(item map[string]interface{}) map[string]string {
+	return getRepoHelper(fmt.Sprintf(urlFormat, !gl.Opts.AllRepos, gl.Auth.Token, page), accumulator, func(item map[string]interface{}) map[string]string {
 		entry := make(map[string]string, 3)
 		url := item["web_url"].(string)
 		entry["url"] = url

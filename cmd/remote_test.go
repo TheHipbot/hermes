@@ -295,7 +295,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 
 	getAllRepos = true
 	remoteAddHandler(mockCmd, []string{"github.com"})
-	suite.True(optsHarness.MemberOnly)
+	suite.True(optsHarness.AllRepos)
 }
 
 func TestRemoteCmdSuite(t *testing.T) {
