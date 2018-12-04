@@ -13,9 +13,9 @@ var (
 		Inactive: "  {{ .Name | white }}",
 		Selected: "{{ .Name | green }}",
 	}
-	selectRepoLabel   = "Select a repo"
-	selectDriverLabel = "Select remote server type"
-	inputKeyLabel     = "Enter auth token"
+	selectRepoLabel   = "Select a repo "
+	selectDriverLabel = "Select remote server type "
+	inputKeyLabel     = "Enter auth token "
 )
 
 // SelectPrompt is a user prompt which can be Run

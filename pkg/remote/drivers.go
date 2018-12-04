@@ -19,8 +19,14 @@ type Auth struct {
 	Token    string
 }
 
+// DriverOpts provide options for which repos to get
+type DriverOpts struct {
+	AllRepos bool
+	Starred  bool
+}
+
 var (
-	creators map[string]func() (Driver, error)
+	creators = map[string]func(opts *DriverOpts) (Driver, error){}
 
 	// auth types
 	authToken = "token"
@@ -32,22 +38,21 @@ var (
 )
 
 func init() {
-	creators = map[string]func() (Driver, error){
-		"github": githubCreator,
-	}
+	RegisterDriver("github", githubCreator)
+	RegisterDriver("gitlab", gitlabCreator)
 }
 
 // NewDriver creates a driver
-func NewDriver(t string) (Driver, error) {
+func NewDriver(t string, opts *DriverOpts) (Driver, error) {
 	c, ok := creators[t]
 	if !ok {
 		return nil, ErrNotImplemented
 	}
-	return c()
+	return c(opts)
 }
 
 // RegisterDriver registers a new driver from the given name and driver returning
 // function
-func RegisterDriver(name string, creator func() (Driver, error)) {
+func RegisterDriver(name string, creator func(opts *DriverOpts) (Driver, error)) {
 	creators[name] = creator
 }

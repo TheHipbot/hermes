@@ -14,17 +14,21 @@ type driver struct {
 	Name string
 }
 
-var drivers = []driver{
-	driver{
-		Name: "github",
-	},
-	driver{
-		Name: "bitbucket",
-	},
-}
+var (
+	drivers = []driver{
+		driver{
+			Name: "github",
+		},
+		driver{
+			Name: "gitlab",
+		},
+	}
+	getAllRepos bool
+)
 
 func init() {
 	remoteCmd.AddCommand(remoteAddCmd)
+	remoteCmd.Flags().BoolVarP(&getAllRepos, "all", "a", false, "get all repos")
 }
 
 // remoteCmd represents the base remote command when called without any subcommands
@@ -53,8 +57,10 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	driver, _ := remote.NewDriver(drivers[i].Name)
-
+	driver, _ := remote.NewDriver(drivers[i].Name, &remote.DriverOpts{
+		AllRepos: getAllRepos,
+	})
+	driver.SetHost(remoteName)
 	auth := remote.Auth{}
 	switch driver.AuthType() {
 	case "token":
