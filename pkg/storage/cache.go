@@ -31,7 +31,8 @@ type Storage interface {
 	AddRepository(name, path string) error
 	RemoveRepository(name string) error
 	AddRemote(url, name string) error
-	Search(needle string) []Repository
+	SearchRepositories(needle string) []Repository
+	SearchRemote(remote string) (Remote, bool)
 }
 
 type storage struct {
@@ -151,15 +152,6 @@ func (s *storage) RemoveRepository(name string) error {
 
 // AddRemote adds a remote to the cache
 func (s *storage) AddRemote(url, name string) error {
-	// type Remote struct {
-	// 	Name     string            `json:"name"`
-	// 	URL      string            `json:"url"`
-	// 	Protocol string            `json:"protocol"`
-	// 	Type     string            `json:"type"`
-	// 	Meta     map[string]string `json:"meta"`
-	// 	Repos    []Repo            `json:"repos"`
-	// }
-
 	if _, ok := s.Remotes[name]; ok {
 		return errors.New("Remote already exists")
 	}
@@ -177,7 +169,7 @@ func (s *storage) AddRemote(url, name string) error {
 
 // Search will search the cache for any repos that match the
 // needle string
-func (s *storage) Search(needle string) []Repository {
+func (s *storage) SearchRepositories(needle string) []Repository {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repository
 	for _, remote := range s.Remotes {
@@ -188,4 +180,13 @@ func (s *storage) Search(needle string) []Repository {
 		}
 	}
 	return results
+}
+
+// SearchRemote
+func (s *storage) SearchRemote(remote string) (Remote, bool) {
+	ptr, ok := s.Remotes[remote]
+	if ok {
+		return *ptr, ok
+	}
+	return Remote{}, ok
 }

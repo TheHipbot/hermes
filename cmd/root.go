@@ -76,13 +76,8 @@ func getHandler(cmd *cobra.Command, args []string) {
 	store.Open()
 	defer store.Close()
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-
 	var selectedRepo storage.Repository
-	cachedRepos := store.Search(repoName)
+	cachedRepos := store.SearchRepositories(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
 	} else if len(cachedRepos) == 0 {
