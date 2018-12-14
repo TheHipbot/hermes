@@ -18,6 +18,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
+
+	// "strings"
 
 	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
@@ -32,12 +35,17 @@ import (
 )
 
 var (
-	cfgFile  string
-	aliasFlg bool
-	appFs    billy.Filesystem
-	configFS *fs.ConfigFS
-	store    storage.Storage
-	prompter prompt.Factory
+	cfgFile   string
+	aliasFlg  bool
+	appFs     billy.Filesystem
+	configFS  *fs.ConfigFS
+	store     storage.Storage
+	prompter  prompt.Factory
+	protocols = []string{
+		"https",
+		"ssh",
+		"http",
+	}
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -77,6 +85,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 	defer store.Close()
 
 	var selectedRepo storage.Repository
+	remote, ok := store.SearchRemote(strings.Split(repoName, "/")[0])
 	cachedRepos := store.SearchRepositories(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
@@ -87,6 +96,17 @@ func getHandler(cmd *cobra.Command, args []string) {
 		}
 		if err := store.AddRepository(repoName, viper.GetString("repo_path")); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
+		}
+		if !ok {
+			// prompt user for protocol
+			p := prompt.CreateProtoclSelectPrompt(prompter, protocols)
+			i, _, err := p.Run()
+			if err != nil {
+				fmt.Printf("error retrieving input")
+				os.Exit(1)
+			}
+			remote, _ = store.SearchRemote(strings.Split(repoName, "/")[0])
+			remote.Protocol = protocols[i]
 		}
 		store.Save()
 	} else {
@@ -102,7 +122,15 @@ func getHandler(cmd *cobra.Command, args []string) {
 	repo := repo.GitRepository{
 		Fs:   appFs,
 		Name: selectedRepo.Name,
-		URL:  fmt.Sprintf("https://%s", selectedRepo.Name),
+	}
+
+	switch remote.Protocol {
+	case "ssh":
+		repo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
+	case "http":
+		repo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
+	default:
+		repo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
 	}
 
 	if err := repo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {

@@ -34,15 +34,15 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // AddRemote mocks base method
-func (m *MockStorage) AddRemote(arg0, arg1 string) error {
-	ret := m.ctrl.Call(m, "AddRemote", arg0, arg1)
+func (m *MockStorage) AddRemote(arg0, arg1, arg2 string) error {
+	ret := m.ctrl.Call(m, "AddRemote", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRemote indicates an expected call of AddRemote
-func (mr *MockStorageMockRecorder) AddRemote(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRemote", reflect.TypeOf((*MockStorage)(nil).AddRemote), arg0, arg1)
+func (mr *MockStorageMockRecorder) AddRemote(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRemote", reflect.TypeOf((*MockStorage)(nil).AddRemote), arg0, arg1, arg2)
 }
 
 // AddRepository mocks base method
@@ -104,9 +104,9 @@ func (mr *MockStorageMockRecorder) Save() *gomock.Call {
 }
 
 // SearchRemote mocks base method
-func (m *MockStorage) SearchRemote(arg0 string) (storage.Remote, bool) {
+func (m *MockStorage) SearchRemote(arg0 string) (*storage.Remote, bool) {
 	ret := m.ctrl.Call(m, "SearchRemote", arg0)
-	ret0, _ := ret[0].(storage.Remote)
+	ret0, _ := ret[0].(*storage.Remote)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }

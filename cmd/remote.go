@@ -82,8 +82,15 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	defer store.Close()
 	defer store.Save()
 
+	p = prompt.CreateProtoclSelectPrompt(prompter, protocols)
+	i, _, err = p.Run()
+	if err != nil {
+		fmt.Printf("error retrieving input")
+		os.Exit(1)
+	}
+
 	// TODO check if remote already present
-	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName)
+	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName, protocols[i])
 
 	// add repos to cache
 	for _, r := range repos {

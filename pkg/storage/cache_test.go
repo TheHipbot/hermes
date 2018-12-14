@@ -307,7 +307,7 @@ func (s *StorageSuite) TestStorageSearchRemote() {
 func (s *StorageSuite) TestStorageSearchRemoteWithoutResult() {
 	res, ok := testStorage.SearchRemote("dne.com")
 	s.False(ok)
-	s.Equal(Remote{}, res)
+	s.Equal(&Remote{}, res)
 }
 
 func TestStorageSuite(t *testing.T) {
