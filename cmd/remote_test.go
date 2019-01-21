@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/TheHipbot/hermes/mock"
 	"github.com/TheHipbot/hermes/pkg/remote"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -154,19 +156,28 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/thehipbot/hermes", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/hermes",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/hermes"),
+			}).
 			Return(nil).
 			Times(1),
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/thehipbot/dotfiles", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/dotfiles",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/dotfiles"),
+			}).
 			Return(nil).
 			Times(1),
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/carsdotcom/bitcar", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/carsdotcom/bitcar",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/carsdotcom/bitcar"),
+			}).
 			Return(nil).
 			Times(1),
 
@@ -294,19 +305,28 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 
 	mockStore.
 		EXPECT().
-		AddRepository("github.com/thehipbot/hermes", testRepoPath).
+		AddRepository(&storage.Repository{
+			Name: "github.com/thehipbot/hermes",
+			Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/hermes"),
+		}).
 		Return(nil).
 		Times(1)
 
 	mockStore.
 		EXPECT().
-		AddRepository("github.com/thehipbot/dotfiles", testRepoPath).
+		AddRepository(&storage.Repository{
+			Name: "github.com/thehipbot/dotfiles",
+			Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/dotfiles"),
+		}).
 		Return(nil).
 		Times(1)
 
 	mockStore.
 		EXPECT().
-		AddRepository("github.com/carsdotcom/bitcar", testRepoPath).
+		AddRepository(&storage.Repository{
+			Name: "github.com/carsdotcom/bitcar",
+			Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/carsdotcom/bitcar"),
+		}).
 		Return(nil).
 		Times(1)
 
@@ -438,19 +458,28 @@ func (suite *RemoteCmdSuite) TestRemoteAddSSH() {
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/thehipbot/hermes", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/hermes",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/hermes"),
+			}).
 			Return(nil).
 			Times(1),
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/thehipbot/dotfiles", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/dotfiles",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/dotfiles"),
+			}).
 			Return(nil).
 			Times(1),
 
 		mockStore.
 			EXPECT().
-			AddRepository("github.com/carsdotcom/bitcar", testRepoPath).
+			AddRepository(&storage.Repository{
+				Name: "github.com/carsdotcom/bitcar",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/carsdotcom/bitcar"),
+			}).
 			Return(nil).
 			Times(1),
 

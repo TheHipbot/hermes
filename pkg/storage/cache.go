@@ -28,7 +28,7 @@ type Storage interface {
 	Open()
 	Save() error
 	Close() error
-	AddRepository(name, path string) error
+	AddRepository(repo *Repository) error
 	RemoveRepository(name string) error
 	AddRemote(url, name, protocol string) error
 	SearchRepositories(needle string) []Repository
@@ -98,15 +98,11 @@ func (s *storage) Close() error {
 }
 
 // AddRepository a repo to the cache
-func (s *storage) AddRepository(name, path string) error {
-	repoPath := fmt.Sprintf("%s%s", path, name)
-	remote := strings.Split(name, "/")[0]
+func (s *storage) AddRepository(repo *Repository) error {
+	remote := strings.Split(repo.Name, "/")[0]
 
 	if r, ok := s.Remotes[remote]; ok {
-		s.Remotes[remote].Repos = append(r.Repos, Repository{
-			Name: name,
-			Path: repoPath,
-		})
+		s.Remotes[remote].Repos = append(r.Repos, *repo)
 	} else {
 		remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))
 		if err != nil {
@@ -117,10 +113,7 @@ func (s *storage) AddRepository(name, path string) error {
 			Name: remote,
 			URL:  remoteURL.String(),
 			Repos: []Repository{
-				Repository{
-					Name: name,
-					Path: repoPath,
-				},
+				*repo,
 			},
 		}
 	}

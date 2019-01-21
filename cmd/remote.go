@@ -6,6 +6,7 @@ import (
 
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/remote"
+	"github.com/TheHipbot/hermes/pkg/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -94,6 +95,12 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 
 	// add repos to cache
 	for _, r := range repos {
-		store.AddRepository(r["name"], viper.GetString("repo_path"))
+		repoToAdd := &storage.Repository{
+			Name:     r["name"],
+			Path:     fmt.Sprintf("%s%s", viper.GetString("repo_path"), r["name"]),
+			CloneURL: r["clone_url"],
+			SSHURL:   r["ssh_url"],
+		}
+		store.AddRepository(repoToAdd)
 	}
 }

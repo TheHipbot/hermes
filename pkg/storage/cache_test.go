@@ -177,12 +177,18 @@ func (s *StorageSuite) TestCacheAdd() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
 	results = testStorage.SearchRepositories("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 
-	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/docker",
+		Path: "/repos/",
+	})
 	results = testStorage.SearchRepositories("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
@@ -193,7 +199,10 @@ func (s *StorageSuite) TestCacheAddNewRemote() {
 
 	remote := testStorage.Remotes["gopkg.in"]
 	s.Nil(remote, "The remote should not exist")
-	testStorage.AddRepository("gopkg.in/src-d/go-billy.v4", "/repos/")
+	testStorage.AddRepository(&Repository{
+		Name: "gopkg.in/src-d/go-billy.v4",
+		Path: "/repos/",
+	})
 	results = testStorage.SearchRepositories("billy")
 	s.Len(results, 1, "There should be the new repo")
 	remote = testStorage.Remotes["gopkg.in"]
@@ -204,7 +213,10 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
 	results = testStorage.SearchRepositories("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
@@ -216,7 +228,10 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
 	s.Equal(repoCnt+1, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
 
-	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/docker",
+		Path: "/repos/",
+	})
 	results = testStorage.SearchRepositories("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")

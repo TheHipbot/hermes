@@ -46,15 +46,15 @@ func (mr *MockStorageMockRecorder) AddRemote(arg0, arg1, arg2 interface{}) *gomo
 }
 
 // AddRepository mocks base method
-func (m *MockStorage) AddRepository(arg0, arg1 string) error {
-	ret := m.ctrl.Call(m, "AddRepository", arg0, arg1)
+func (m *MockStorage) AddRepository(arg0 *storage.Repository) error {
+	ret := m.ctrl.Call(m, "AddRepository", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRepository indicates an expected call of AddRepository
-func (mr *MockStorageMockRecorder) AddRepository(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepository", reflect.TypeOf((*MockStorage)(nil).AddRepository), arg0, arg1)
+func (mr *MockStorageMockRecorder) AddRepository(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepository", reflect.TypeOf((*MockStorage)(nil).AddRepository), arg0)
 }
 
 // Close mocks base method

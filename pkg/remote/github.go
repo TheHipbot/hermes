@@ -61,6 +61,8 @@ func (gh *GitHub) GetRepos() ([]map[string]string, error) {
 		url := item["html_url"].(string)
 		entry["url"] = url
 		entry["name"] = strings.Split(url, "://")[1]
+		entry["clone_url"] = item["clone_url"].(string)
+		entry["ssh_url"] = item["ssh_url"].(string)
 		return entry
 	})
 }

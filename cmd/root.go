@@ -97,7 +97,10 @@ func getHandler(cmd *cobra.Command, args []string) {
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := store.AddRepository(repoName, viper.GetString("repo_path")); err != nil {
+		if err := store.AddRepository(&storage.Repository{
+			Name: repoName,
+			Path: viper.GetString("repo_path"),
+		}); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
 		}
 		if !ok {
@@ -128,12 +131,25 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 	switch remote.Protocol {
 	case "ssh":
-		targetRepo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
-		targetRepo.Protocol = "ssh"
+		if selectedRepo.SSHURL != "" {
+			targetRepo.URL = selectedRepo.SSHURL
+			targetRepo.Protocol = "ssh"
+		} else {
+			targetRepo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
+			targetRepo.Protocol = "ssh"
+		}
 	case "http":
-		targetRepo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
+		if selectedRepo.CloneURL != "" {
+			targetRepo.URL = selectedRepo.CloneURL
+		} else {
+			targetRepo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
+		}
 	default:
-		targetRepo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
+		if selectedRepo.CloneURL != "" {
+			targetRepo.URL = selectedRepo.CloneURL
+		} else {
+			targetRepo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
+		}
 	}
 
 	if err := targetRepo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
