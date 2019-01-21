@@ -20,8 +20,6 @@ import (
 	"os"
 	"strings"
 
-	// "strings"
-
 	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/repo"
