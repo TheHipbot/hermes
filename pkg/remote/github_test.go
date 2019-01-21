@@ -31,6 +31,16 @@ func (s *GitHubRemoteSuite) TestSetHost() {
 	s.Equal("http://test.github.com", gh.Host, "Host should be set")
 }
 
+func (s *GitHubRemoteSuite) TestSetHostToGithub() {
+	d, err := githubCreator(&DriverOpts{})
+	s.Nil(err, "Creator should not return error")
+	gh := d.(*GitHub)
+	d.SetHost("https://github.com")
+	s.Equal("https://api.github.com", gh.Host, "Host should be set to default")
+	d.SetHost("github.com")
+	s.Equal("https://api.github.com", gh.Host, "Host should be set to default")
+}
+
 func (s *GitHubRemoteSuite) TestGitHubSetAuth() {
 	d, err := githubCreator(&DriverOpts{})
 	s.Nil(err, "Creator should not return error")

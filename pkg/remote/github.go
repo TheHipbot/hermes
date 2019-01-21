@@ -3,6 +3,7 @@ package remote
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -28,7 +29,12 @@ type GitHub struct {
 
 // SetHost sets github driver host to provided string
 func (gh *GitHub) SetHost(host string) {
-	gh.Host = host
+	match, err := regexp.MatchString("^(https?://)?github.com", host)
+	if match || err != nil {
+		gh.Host = defaultGitHubAPIHost
+	} else {
+		gh.Host = host
+	}
 }
 
 // Authenticate sets Auth object for driver

@@ -73,6 +73,8 @@ var getCmd = &cobra.Command{
 	Run:   getHandler,
 }
 
+// TODO: add repository only on successful clone
+// TODO: update ssh to not assume username
 func getHandler(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		fmt.Println("Requires repo as an argument")
@@ -80,16 +82,17 @@ func getHandler(cmd *cobra.Command, args []string) {
 	}
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
-	// repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
 	store.Open()
 	defer store.Close()
 
 	var selectedRepo storage.Repository
-	remote, ok := store.SearchRemote(strings.Split(repoName, "/")[0])
+	var remote *storage.Remote
 	cachedRepos := store.SearchRepositories(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
+		remote, _ = store.SearchRemote(strings.Split(selectedRepo.Name, "/")[0])
 	} else if len(cachedRepos) == 0 {
+		remote, ok := store.SearchRemote(strings.Split(repoName, "/")[0])
 		selectedRepo = storage.Repository{
 			Name: repoName,
 			Path: pathToRepo,
@@ -117,23 +120,23 @@ func getHandler(cmd *cobra.Command, args []string) {
 			fmt.Printf("Error selecting repo\n%s\n", err)
 			os.Exit(1)
 		}
+		remote, _ = store.SearchRemote(strings.Split(selectedRepo.Name, "/")[0])
 	}
 
-	repo := repo.GitRepository{
-		Fs:   appFs,
-		Name: selectedRepo.Name,
-	}
+	targetRepo := repo.NewGitRepository(selectedRepo.Name, "")
+	targetRepo.Fs = appFs
 
 	switch remote.Protocol {
 	case "ssh":
-		repo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
+		targetRepo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
+		targetRepo.Protocol = "ssh"
 	case "http":
-		repo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
+		targetRepo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
 	default:
-		repo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
+		targetRepo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
 	}
 
-	if err := repo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
+	if err := targetRepo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
 		fmt.Printf("Error cloning repo %s\n%s\n", selectedRepo.Path, err)
 		os.Exit(1)
 	}

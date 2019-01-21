@@ -159,7 +159,7 @@ func (s *storage) AddRemote(url, name, protocol string) error {
 	remote := &Remote{
 		Name:     name,
 		URL:      url,
-		Protocol: "http",
+		Protocol: protocol,
 		Repos:    []Repository{},
 	}
 

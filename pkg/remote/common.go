@@ -3,7 +3,6 @@ package remote
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"regexp"
 	"time"
@@ -13,7 +12,6 @@ func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]i
 	client := &http.Client{Timeout: 30 * time.Second}
 	res, err := client.Get(url)
 
-	fmt.Println(url)
 	if err != nil {
 		return acc, err
 	}
