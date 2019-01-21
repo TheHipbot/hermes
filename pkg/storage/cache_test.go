@@ -177,13 +177,19 @@ func (s *StorageSuite) TestCacheAdd() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
-	results = testStorage.Search("weather")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 
-	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
-	results = testStorage.Search("docker")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/docker",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 }
@@ -193,8 +199,11 @@ func (s *StorageSuite) TestCacheAddNewRemote() {
 
 	remote := testStorage.Remotes["gopkg.in"]
 	s.Nil(remote, "The remote should not exist")
-	testStorage.AddRepository("gopkg.in/src-d/go-billy.v4", "/repos/")
-	results = testStorage.Search("billy")
+	testStorage.AddRepository(&Repository{
+		Name: "gopkg.in/src-d/go-billy.v4",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("billy")
 	s.Len(results, 1, "There should be the new repo")
 	remote = testStorage.Remotes["gopkg.in"]
 	s.NotNil(remote, "The remote should exist")
@@ -204,8 +213,11 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	var results []Repository
 
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
-	testStorage.AddRepository("github.com/TheHipbot/weather", "/repos/")
-	results = testStorage.Search("weather")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("weather")
 	s.Len(results, 1, "There should be the new repo")
 	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 	err := testStorage.Save()
@@ -216,8 +228,11 @@ func (s *StorageSuite) TestCacheAddThenSave() {
 	s.Nil(json.Unmarshal(raw, &temp), "Should be unmarshallable")
 	s.Equal(repoCnt+1, len(temp.Remotes["github.com"].Repos), "The new repo should be stored with existing remote in cache")
 
-	testStorage.AddRepository("github.com/TheHipbot/docker", "/repos/")
-	results = testStorage.Search("docker")
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/docker",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("docker")
 	s.Len(results, 2, "There should be the new repo")
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 	testStorage.Save()
@@ -232,7 +247,7 @@ func (s *StorageSuite) TestRemoveRepository() {
 	repoCnt := len(testStorage.Remotes["github.com"].Repos)
 	testStorage.RemoveRepository("github.com/TheHipbot/dotfiles")
 	s.Equal(repoCnt-1, len(testStorage.Remotes["github.com"].Repos), "github.com remote should have one less repo")
-	results := testStorage.Search("dotfiles")
+	results := testStorage.SearchRepositories("dotfiles")
 	s.Equal(len(results), 0, "There should no longer be a dotfiles repo")
 }
 
@@ -253,19 +268,19 @@ func (s *StorageSuite) TestRemoveRepoAndSave() {
 	}
 	cache.Open()
 	s.Equal(repoCnt-1, len(cache.Remotes["github.com"].Repos), "github.com remote should have one less repo")
-	results := cache.Search("dotfiles")
+	results := cache.SearchRepositories("dotfiles")
 	s.Equal(len(results), 0, "There should no longer be a dotfiles repo")
 }
 
 func (s *StorageSuite) TestStorageSearchWithResults() {
 	var results []Repository
 
-	results = testStorage.Search("files")
+	results = testStorage.SearchRepositories("files")
 	s.Len(results, 2, "There are 2 repos with files in the name")
 	s.Equal(results[0].Name, "github.com/TheHipbot/dotfiles")
 	s.Equal(results[1].Name, "github.com/TheHipbot/dockerfiles")
 
-	results = testStorage.Search("gitlab")
+	results = testStorage.SearchRepositories("gitlab")
 	s.Len(results, 2, "There are 2 repos with files in the name")
 	s.Equal(results[0].Name, "gitlab.com/gitlab-org/gitlab-ce")
 	s.Equal(results[1].Name, "gitlab.com/gnachman/iterm2")
@@ -274,12 +289,12 @@ func (s *StorageSuite) TestStorageSearchWithResults() {
 func (s *StorageSuite) TestStorageSearchCaseInSensitiveWithResults() {
 	var results []Repository
 
-	results = testStorage.Search("FILES")
+	results = testStorage.SearchRepositories("FILES")
 	s.Len(results, 2, "There are 2 repos with files in the name")
 	s.Equal(results[0].Name, "github.com/TheHipbot/dotfiles")
 	s.Equal(results[1].Name, "github.com/TheHipbot/dockerfiles")
 
-	results = testStorage.Search("thehipbot")
+	results = testStorage.SearchRepositories("thehipbot")
 	s.Len(results, 3, "There are 3 repos with files in the name")
 	s.Equal(results[0].Name, "github.com/TheHipbot/hermes")
 	s.Equal(results[1].Name, "github.com/TheHipbot/dotfiles")
@@ -289,12 +304,25 @@ func (s *StorageSuite) TestStorageSearchCaseInSensitiveWithResults() {
 func (s *StorageSuite) TestStorageSearchWithoutResults() {
 	var results []Repository
 
-	results = testStorage.Search("test")
+	results = testStorage.SearchRepositories("test")
 	s.Len(results, 0, "There no results")
 
 	testStorage.Remotes = map[string]*Remote{}
-	results = testStorage.Search("files")
+	results = testStorage.SearchRepositories("files")
 	s.Len(results, 0, "There no results")
+}
+
+func (s *StorageSuite) TestStorageSearchRemote() {
+	res, ok := testStorage.SearchRemote("github.com")
+	s.True(ok)
+	s.Equal("github.com", res.Name)
+	s.Equal("https://github.com", res.URL)
+}
+
+func (s *StorageSuite) TestStorageSearchRemoteWithoutResult() {
+	res, ok := testStorage.SearchRemote("dne.com")
+	s.False(ok)
+	s.Equal(&Remote{}, res)
 }
 
 func TestStorageSuite(t *testing.T) {

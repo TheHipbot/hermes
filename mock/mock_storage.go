@@ -34,27 +34,27 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // AddRemote mocks base method
-func (m *MockStorage) AddRemote(arg0, arg1 string) error {
-	ret := m.ctrl.Call(m, "AddRemote", arg0, arg1)
+func (m *MockStorage) AddRemote(arg0, arg1, arg2 string) error {
+	ret := m.ctrl.Call(m, "AddRemote", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRemote indicates an expected call of AddRemote
-func (mr *MockStorageMockRecorder) AddRemote(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRemote", reflect.TypeOf((*MockStorage)(nil).AddRemote), arg0, arg1)
+func (mr *MockStorageMockRecorder) AddRemote(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRemote", reflect.TypeOf((*MockStorage)(nil).AddRemote), arg0, arg1, arg2)
 }
 
 // AddRepository mocks base method
-func (m *MockStorage) AddRepository(arg0, arg1 string) error {
-	ret := m.ctrl.Call(m, "AddRepository", arg0, arg1)
+func (m *MockStorage) AddRepository(arg0 *storage.Repository) error {
+	ret := m.ctrl.Call(m, "AddRepository", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRepository indicates an expected call of AddRepository
-func (mr *MockStorageMockRecorder) AddRepository(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepository", reflect.TypeOf((*MockStorage)(nil).AddRepository), arg0, arg1)
+func (mr *MockStorageMockRecorder) AddRepository(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepository", reflect.TypeOf((*MockStorage)(nil).AddRepository), arg0)
 }
 
 // Close mocks base method
@@ -103,14 +103,27 @@ func (mr *MockStorageMockRecorder) Save() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStorage)(nil).Save))
 }
 
-// Search mocks base method
-func (m *MockStorage) Search(arg0 string) []storage.Repository {
-	ret := m.ctrl.Call(m, "Search", arg0)
+// SearchRemote mocks base method
+func (m *MockStorage) SearchRemote(arg0 string) (*storage.Remote, bool) {
+	ret := m.ctrl.Call(m, "SearchRemote", arg0)
+	ret0, _ := ret[0].(*storage.Remote)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// SearchRemote indicates an expected call of SearchRemote
+func (mr *MockStorageMockRecorder) SearchRemote(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchRemote", reflect.TypeOf((*MockStorage)(nil).SearchRemote), arg0)
+}
+
+// SearchRepositories mocks base method
+func (m *MockStorage) SearchRepositories(arg0 string) []storage.Repository {
+	ret := m.ctrl.Call(m, "SearchRepositories", arg0)
 	ret0, _ := ret[0].([]storage.Repository)
 	return ret0
 }
 
-// Search indicates an expected call of Search
-func (mr *MockStorageMockRecorder) Search(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockStorage)(nil).Search), arg0)
+// SearchRepositories indicates an expected call of SearchRepositories
+func (mr *MockStorageMockRecorder) SearchRepositories(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchRepositories", reflect.TypeOf((*MockStorage)(nil).SearchRepositories), arg0)
 }

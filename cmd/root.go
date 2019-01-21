@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
@@ -32,12 +33,17 @@ import (
 )
 
 var (
-	cfgFile  string
-	aliasFlg bool
-	appFs    billy.Filesystem
-	configFS *fs.ConfigFS
-	store    storage.Storage
-	prompter prompt.Factory
+	cfgFile   string
+	aliasFlg  bool
+	appFs     billy.Filesystem
+	configFS  *fs.ConfigFS
+	store     storage.Storage
+	prompter  prompt.Factory
+	protocols = []string{
+		"https",
+		"ssh",
+		"http",
+	}
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -65,6 +71,8 @@ var getCmd = &cobra.Command{
 	Run:   getHandler,
 }
 
+// TODO: add repository only on successful clone
+// TODO: update ssh to not assume username
 func getHandler(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		fmt.Println("Requires repo as an argument")
@@ -72,26 +80,37 @@ func getHandler(cmd *cobra.Command, args []string) {
 	}
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
-	// repoURL, err := url.Parse(fmt.Sprintf("https://%s", repoName))
 	store.Open()
 	defer store.Close()
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-
 	var selectedRepo storage.Repository
-	cachedRepos := store.Search(repoName)
+	var remote *storage.Remote
+	cachedRepos := store.SearchRepositories(repoName)
 	if len(cachedRepos) == 1 {
 		selectedRepo = cachedRepos[0]
+		remote, _ = store.SearchRemote(strings.Split(selectedRepo.Name, "/")[0])
 	} else if len(cachedRepos) == 0 {
+		remote, ok := store.SearchRemote(strings.Split(repoName, "/")[0])
 		selectedRepo = storage.Repository{
 			Name: repoName,
 			Path: pathToRepo,
 		}
-		if err := store.AddRepository(repoName, viper.GetString("repo_path")); err != nil {
+		if err := store.AddRepository(&storage.Repository{
+			Name: repoName,
+			Path: viper.GetString("repo_path"),
+		}); err != nil {
 			fmt.Printf("Error adding repo to cache %s\n%s\n", pathToRepo, err)
+		}
+		if !ok {
+			// prompt user for protocol
+			p := prompt.CreateProtoclSelectPrompt(prompter, protocols)
+			i, _, err := p.Run()
+			if err != nil {
+				fmt.Printf("error retrieving input")
+				os.Exit(1)
+			}
+			remote, _ = store.SearchRemote(strings.Split(repoName, "/")[0])
+			remote.Protocol = protocols[i]
 		}
 		store.Save()
 	} else {
@@ -102,15 +121,36 @@ func getHandler(cmd *cobra.Command, args []string) {
 			fmt.Printf("Error selecting repo\n%s\n", err)
 			os.Exit(1)
 		}
+		remote, _ = store.SearchRemote(strings.Split(selectedRepo.Name, "/")[0])
 	}
 
-	repo := repo.GitRepository{
-		Fs:   appFs,
-		Name: selectedRepo.Name,
-		URL:  fmt.Sprintf("https://%s", selectedRepo.Name),
+	targetRepo := repo.NewGitRepository(selectedRepo.Name, "")
+	targetRepo.Fs = appFs
+
+	switch remote.Protocol {
+	case "ssh":
+		if selectedRepo.SSHURL != "" {
+			targetRepo.URL = selectedRepo.SSHURL
+			targetRepo.Protocol = "ssh"
+		} else {
+			targetRepo.URL = fmt.Sprintf("ssh://git@%s", selectedRepo.Name)
+			targetRepo.Protocol = "ssh"
+		}
+	case "http":
+		if selectedRepo.CloneURL != "" {
+			targetRepo.URL = selectedRepo.CloneURL
+		} else {
+			targetRepo.URL = fmt.Sprintf("http://%s", selectedRepo.Name)
+		}
+	default:
+		if selectedRepo.CloneURL != "" {
+			targetRepo.URL = selectedRepo.CloneURL
+		} else {
+			targetRepo.URL = fmt.Sprintf("https://%s", selectedRepo.Name)
+		}
 	}
 
-	if err := repo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
+	if err := targetRepo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
 		fmt.Printf("Error cloning repo %s\n%s\n", selectedRepo.Path, err)
 		os.Exit(1)
 	}

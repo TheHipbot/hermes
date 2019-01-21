@@ -31,6 +31,16 @@ func (s *GitHubRemoteSuite) TestSetHost() {
 	s.Equal("http://test.github.com", gh.Host, "Host should be set")
 }
 
+func (s *GitHubRemoteSuite) TestSetHostToGithub() {
+	d, err := githubCreator(&DriverOpts{})
+	s.Nil(err, "Creator should not return error")
+	gh := d.(*GitHub)
+	d.SetHost("https://github.com")
+	s.Equal("https://api.github.com", gh.Host, "Host should be set to default")
+	d.SetHost("github.com")
+	s.Equal("https://api.github.com", gh.Host, "Host should be set to default")
+}
+
 func (s *GitHubRemoteSuite) TestGitHubSetAuth() {
 	d, err := githubCreator(&DriverOpts{})
 	s.Nil(err, "Creator should not return error")
@@ -83,24 +93,34 @@ func TestGitHubRemoteSuite(t *testing.T) {
 var (
 	testResult = []map[string]string{
 		{
-			"url":  "https://github.com/carsdotcom/beacon",
-			"name": "github.com/carsdotcom/beacon",
+			"url":       "https://github.com/carsdotcom/beacon",
+			"name":      "github.com/carsdotcom/beacon",
+			"ssh_url":   "git@github.com:carsdotcom/beacon.git",
+			"clone_url": "https://github.com/carsdotcom/beacon.git",
 		},
 		{
-			"url":  "https://github.com/carsdotcom/bitcar",
-			"name": "github.com/carsdotcom/bitcar",
+			"url":       "https://github.com/carsdotcom/bitcar",
+			"name":      "github.com/carsdotcom/bitcar",
+			"ssh_url":   "git@github.com:carsdotcom/bitcar.git",
+			"clone_url": "https://github.com/carsdotcom/bitcar.git",
 		},
 		{
-			"url":  "https://github.com/carsdotcom/cars.com-sellandtrade-application",
-			"name": "github.com/carsdotcom/cars.com-sellandtrade-application",
+			"url":       "https://github.com/carsdotcom/cars.com-sellandtrade-application",
+			"name":      "github.com/carsdotcom/cars.com-sellandtrade-application",
+			"ssh_url":   "git@github.com:carsdotcom/cars.com-sellandtrade-application.git",
+			"clone_url": "https://github.com/carsdotcom/cars.com-sellandtrade-application.git",
 		},
 		{
-			"url":  "https://github.com/TheHipbot/blog-resources",
-			"name": "github.com/TheHipbot/blog-resources",
+			"url":       "https://github.com/TheHipbot/blog-resources",
+			"name":      "github.com/TheHipbot/blog-resources",
+			"ssh_url":   "git@github.com:TheHipbot/blog-resources.git",
+			"clone_url": "https://github.com/TheHipbot/blog-resources.git",
 		},
 		{
-			"url":  "https://github.com/TheHipbot/causal-relations",
-			"name": "github.com/TheHipbot/causal-relations",
+			"url":       "https://github.com/TheHipbot/causal-relations",
+			"name":      "github.com/TheHipbot/causal-relations",
+			"ssh_url":   "git@github.com:TheHipbot/causal-relations.git",
+			"clone_url": "https://github.com/TheHipbot/causal-relations.git",
 		},
 	}
 	testResponses = []string{

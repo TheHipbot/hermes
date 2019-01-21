@@ -28,10 +28,11 @@ type Storage interface {
 	Open()
 	Save() error
 	Close() error
-	AddRepository(name, path string) error
+	AddRepository(repo *Repository) error
 	RemoveRepository(name string) error
-	AddRemote(url, name string) error
-	Search(needle string) []Repository
+	AddRemote(url, name, protocol string) error
+	SearchRepositories(needle string) []Repository
+	SearchRemote(remote string) (*Remote, bool)
 }
 
 type storage struct {
@@ -97,15 +98,11 @@ func (s *storage) Close() error {
 }
 
 // AddRepository a repo to the cache
-func (s *storage) AddRepository(name, path string) error {
-	repoPath := fmt.Sprintf("%s%s", path, name)
-	remote := strings.Split(name, "/")[0]
+func (s *storage) AddRepository(repo *Repository) error {
+	remote := strings.Split(repo.Name, "/")[0]
 
 	if r, ok := s.Remotes[remote]; ok {
-		s.Remotes[remote].Repos = append(r.Repos, Repository{
-			Name: name,
-			Path: repoPath,
-		})
+		s.Remotes[remote].Repos = append(r.Repos, *repo)
 	} else {
 		remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))
 		if err != nil {
@@ -116,10 +113,7 @@ func (s *storage) AddRepository(name, path string) error {
 			Name: remote,
 			URL:  remoteURL.String(),
 			Repos: []Repository{
-				Repository{
-					Name: name,
-					Path: repoPath,
-				},
+				*repo,
 			},
 		}
 	}
@@ -150,16 +144,7 @@ func (s *storage) RemoveRepository(name string) error {
 }
 
 // AddRemote adds a remote to the cache
-func (s *storage) AddRemote(url, name string) error {
-	// type Remote struct {
-	// 	Name     string            `json:"name"`
-	// 	URL      string            `json:"url"`
-	// 	Protocol string            `json:"protocol"`
-	// 	Type     string            `json:"type"`
-	// 	Meta     map[string]string `json:"meta"`
-	// 	Repos    []Repo            `json:"repos"`
-	// }
-
+func (s *storage) AddRemote(url, name, protocol string) error {
 	if _, ok := s.Remotes[name]; ok {
 		return errors.New("Remote already exists")
 	}
@@ -167,7 +152,7 @@ func (s *storage) AddRemote(url, name string) error {
 	remote := &Remote{
 		Name:     name,
 		URL:      url,
-		Protocol: "http",
+		Protocol: protocol,
 		Repos:    []Repository{},
 	}
 
@@ -177,7 +162,7 @@ func (s *storage) AddRemote(url, name string) error {
 
 // Search will search the cache for any repos that match the
 // needle string
-func (s *storage) Search(needle string) []Repository {
+func (s *storage) SearchRepositories(needle string) []Repository {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repository
 	for _, remote := range s.Remotes {
@@ -188,4 +173,13 @@ func (s *storage) Search(needle string) []Repository {
 		}
 	}
 	return results
+}
+
+// SearchRemote
+func (s *storage) SearchRemote(remote string) (*Remote, bool) {
+	ptr, ok := s.Remotes[remote]
+	if ok {
+		return ptr, ok
+	}
+	return &Remote{}, ok
 }

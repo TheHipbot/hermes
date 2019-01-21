@@ -55,6 +55,8 @@ func (gl *Gitlab) GetRepos() ([]map[string]string, error) {
 		url := item["web_url"].(string)
 		entry["url"] = url
 		entry["name"] = strings.Split(url, "://")[1]
+		entry["clone_url"] = item["http_url_to_repo"].(string)
+		entry["ssh_url"] = item["ssh_url_to_repo"].(string)
 		return entry
 	})
 }

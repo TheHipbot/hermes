@@ -13,9 +13,17 @@ var (
 		Inactive: "  {{ .Name | white }}",
 		Selected: "{{ .Name | green }}",
 	}
+	selectProtocolTemplates = &promptui.SelectTemplates{
+		Label:    "{{ . }}?",
+		Active:   "\U00002714 {{ . | cyan }}",
+		Inactive: "  {{ . | white }}",
+		Selected: "{{ . | green }}",
+	}
 	selectRepoLabel   = "Select a repo "
 	selectDriverLabel = "Select remote server type "
 	inputKeyLabel     = "Enter auth token "
+
+	selectProtocolLabel = "Select a protocol to use with this remote "
 )
 
 // SelectPrompt is a user prompt which can be Run
@@ -66,12 +74,17 @@ func CreateRepoSelectPrompt(f Factory, repos interface{}) SelectPrompt {
 	return f.CreateSelectPrompt(selectRepoLabel, repos, selectRepoTemplates)
 }
 
-//CreateDriverSelectPrompt returns prompt for driver
+// CreateDriverSelectPrompt returns prompt for driver
 func CreateDriverSelectPrompt(f Factory, drivers interface{}) SelectPrompt {
 	return f.CreateSelectPrompt(selectDriverLabel, drivers, selectRepoTemplates)
 }
 
-//CreateTokenInputPrompt returns prompt for auth key
+// CreateTokenInputPrompt returns prompt for auth key
 func CreateTokenInputPrompt(f Factory) InputPrompt {
 	return f.CreateInputPrompt(inputKeyLabel)
+}
+
+// CreateProtoclSelectPrompt returns prompt for driver
+func CreateProtoclSelectPrompt(f Factory, protocols []string) SelectPrompt {
+	return f.CreateSelectPrompt(selectProtocolLabel, protocols, selectProtocolTemplates)
 }
