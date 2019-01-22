@@ -71,6 +71,9 @@ func (s *storage) Open() {
 
 // Save cache to ConfigFS
 func (s *storage) Save() error {
+	if r, ok := s.Remotes["gitlab-ee-poc.jenkins.release.in.here.com"]; ok {
+		fmt.Println(r)
+	}
 	raw, err := json.Marshal(s)
 	if err != nil {
 		return err
@@ -149,6 +152,7 @@ func (s *storage) AddRemote(url, name, protocol string) error {
 		return errors.New("Remote already exists")
 	}
 
+	// check if protocol is valid
 	remote := &Remote{
 		Name:     name,
 		URL:      url,

@@ -3,6 +3,8 @@
 package prompt
 
 import (
+	"fmt"
+
 	"github.com/manifoldco/promptui"
 )
 
@@ -24,6 +26,7 @@ var (
 	inputKeyLabel     = "Enter auth token "
 
 	selectProtocolLabel = "Select a protocol to use with this remote "
+	portInputLabel      = "Input the port number [%d] "
 )
 
 // SelectPrompt is a user prompt which can be Run
@@ -84,7 +87,12 @@ func CreateTokenInputPrompt(f Factory) InputPrompt {
 	return f.CreateInputPrompt(inputKeyLabel)
 }
 
-// CreateProtoclSelectPrompt returns prompt for driver
-func CreateProtoclSelectPrompt(f Factory, protocols []string) SelectPrompt {
+// CreateProtocolSelectPrompt returns prompt for driver
+func CreateProtocolSelectPrompt(f Factory, protocols []string) SelectPrompt {
 	return f.CreateSelectPrompt(selectProtocolLabel, protocols, selectProtocolTemplates)
+}
+
+// CreatePortInputPrompt returns prompt for auth key
+func CreatePortInputPrompt(f Factory, defaultPort string) InputPrompt {
+	return f.CreateInputPrompt(fmt.Sprintf(portInputLabel, defaultPort))
 }

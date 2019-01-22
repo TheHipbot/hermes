@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/remote"
@@ -83,12 +85,18 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	defer store.Close()
 	defer store.Save()
 
-	p = prompt.CreateProtoclSelectPrompt(prompter, protocols)
+	p = prompt.CreateProtocolSelectPrompt(prompter, protocols)
 	i, _, err = p.Run()
 	if err != nil {
 		fmt.Printf("Error retrieving input")
 		os.Exit(1)
 	}
+
+	if re, err := regexp.Compile(`^(https?|ssh)://`); err == nil {
+		remoteName = string(re.ReplaceAll([]byte(remoteName), []byte("")))
+	}
+
+	strings.Split(remoteName, "")
 
 	// TODO check if remote already present
 	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName, protocols[i])

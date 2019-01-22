@@ -103,7 +103,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		}
 		if !ok {
 			// prompt user for protocol
-			p := prompt.CreateProtoclSelectPrompt(prompter, protocols)
+			p := prompt.CreateProtocolSelectPrompt(prompter, protocols)
 			i, _, err := p.Run()
 			if err != nil {
 				fmt.Printf("error retrieving input")
