@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/TheHipbot/hermes/pkg/prompt"
@@ -50,7 +51,13 @@ var remoteAddCmd = &cobra.Command{
 }
 
 func remoteAddHandler(cmd *cobra.Command, args []string) {
-	remoteName := args[0]
+	remoteURL, err := url.Parse(args[0])
+	remoteName := remoteURL.Hostname()
+	if err != nil {
+		fmt.Printf("Valid remote URL required")
+		os.Exit(1)
+	}
+
 	p := prompt.CreateDriverSelectPrompt(prompter, drivers)
 	i, _, err := p.Run()
 	if err != nil {
@@ -61,7 +68,7 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	driver, _ := remote.NewDriver(drivers[i].Name, &remote.DriverOpts{
 		AllRepos: getAllRepos,
 	})
-	driver.SetHost(remoteName)
+	driver.SetHost(remoteURL.String())
 	auth := remote.Auth{}
 	switch driver.AuthType() {
 	case "token":
@@ -91,7 +98,7 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	}
 
 	// TODO check if remote already present
-	store.AddRemote(fmt.Sprintf("https://%s", remoteName), remoteName, protocols[i])
+	store.AddRemote(remoteURL.String(), remoteName, protocols[i])
 
 	// add repos to cache
 	for _, r := range repos {
