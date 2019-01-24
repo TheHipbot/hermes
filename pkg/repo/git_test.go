@@ -99,7 +99,26 @@ func (t *testCloner) clone(storer *filesystem.Storage, tree billy.Filesystem, op
 
 func (suite *GitRepositorySuite) TestCloneSSHConfig() {
 	pathToClone := fmt.Sprintf("%s%s", testReposPath, testRepoName)
-	repoURL, err := url.Parse("https://github.com/TheHipbot/hermes")
+	repoURL := "git@github.com:/TheHipbot/hermes"
+
+	repo := NewGitRepository(testRepoName, repoURL)
+	repo.Fs = appFs
+	repo.Protocol = "ssh"
+	repo.cloner = &testCloner{
+		suite: suite,
+	}
+
+	fullPath, _ := homedir.Dir()
+
+	appFs.MkdirAll(fmt.Sprintf("%s/.ssh/", fullPath), os.ModeDir)
+	writePEMFile("~/.ssh/id_rsa")
+	writeSSHConfigFile("github.com", "~/.ssh/id_rsa")
+	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
+}
+
+func (suite *GitRepositorySuite) TestCloneSSHConfigWithPort() {
+	pathToClone := fmt.Sprintf("%s%s", testReposPath, "gitlab.hipbot.com/TheHipbot/hermes")
+	repoURL, err := url.Parse("ssh://git@gitlab.hipbot.com:8893/TheHipbot/hermes")
 	suite.Nil(err, "Test URL could not be parsed")
 
 	repo := NewGitRepository(testRepoName, repoURL.String())
@@ -113,7 +132,7 @@ func (suite *GitRepositorySuite) TestCloneSSHConfig() {
 
 	appFs.MkdirAll(fmt.Sprintf("%s/.ssh/", fullPath), os.ModeDir)
 	writePEMFile("~/.ssh/id_rsa")
-	writeSSHConfigFile()
+	writeSSHConfigFile("gitlab.hipbot.com", "~/.ssh/id_rsa")
 	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
 }
 
@@ -134,7 +153,7 @@ func writePEMFile(path string) error {
 	return err
 }
 
-func writeSSHConfigFile() error {
+func writeSSHConfigFile(host, path string) error {
 	fullPath, err := homedir.Dir()
 	if err != nil {
 		return err
@@ -143,6 +162,6 @@ func writeSSHConfigFile() error {
 	if err != nil {
 		return err
 	}
-	_, err = file.Write([]byte(fmt.Sprintf(sshConfigFmtStr, "github.com", "~/.ssh/id_rsa")))
+	_, err = file.Write([]byte(fmt.Sprintf(sshConfigFmtStr, host, path)))
 	return err
 }

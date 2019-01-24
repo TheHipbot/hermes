@@ -3,15 +3,17 @@ package repo
 import (
 	"errors"
 	"os"
+	"regexp"
 
 	"github.com/kevinburke/ssh_config"
 	homedir "github.com/mitchellh/go-homedir"
+	"golang.org/x/crypto/ssh"
 	billy "gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/osfs"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/cache"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	sshgit "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
@@ -58,7 +60,17 @@ func (gr *GitRepository) Clone(path string) error {
 
 	switch gr.Protocol {
 	case "ssh":
-		a, _ := getSSHAuth("github.com")
+		var hostname string
+		r, err := regexp.Compile(`.+@([a-zA-z.\-0-9]+)[:/].+`)
+		if err != nil {
+			return errors.New("Regular expression should compile")
+		}
+		cps := r.FindStringSubmatch(gr.URL)
+		if len(cps) < 2 {
+			return errors.New("Could not find hostname in URL")
+		}
+		hostname = cps[1]
+		a, err := getSSHAuth(hostname)
 		opts.Auth = a
 	}
 
@@ -75,7 +87,14 @@ func getSSHAuth(host string) (transport.AuthMethod, error) {
 
 	for _, path := range pathsToCheck {
 		if keyPath, err := pathIfExists(path); err == nil {
-			return ssh.NewPublicKeysFromFile("git", keyPath, "")
+			pk, err := sshgit.NewPublicKeysFromFile("git", keyPath, "")
+			if err != nil {
+				return nil, err
+			}
+			pk.HostKeyCallbackHelper = sshgit.HostKeyCallbackHelper{
+				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			}
+			return pk, nil
 		}
 	}
 

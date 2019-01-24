@@ -86,7 +86,7 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 
 		suite.mockDriver.
 			EXPECT().
-			SetHost(gomock.Eq("github.com")).
+			SetHost(gomock.Eq("https://github.com")).
 			Return().
 			Times(1),
 
@@ -194,7 +194,7 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 			Times(1),
 	)
 
-	remoteAddHandler(mockCmd, []string{"github.com"})
+	remoteAddHandler(mockCmd, []string{"https://github.com"})
 }
 
 func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
@@ -239,7 +239,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 
 		suite.mockDriver.
 			EXPECT().
-			SetHost(gomock.Eq("github.com")).
+			SetHost(gomock.Eq("https://github.com")).
 			Return().
 			Times(1),
 
@@ -345,7 +345,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 	)
 
 	getAllRepos = true
-	remoteAddHandler(mockCmd, []string{"github.com"})
+	remoteAddHandler(mockCmd, []string{"https://github.com"})
 	suite.True(optsHarness.AllRepos)
 }
 
@@ -389,7 +389,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddSSH() {
 
 	suite.mockDriver.
 		EXPECT().
-		SetHost(gomock.Eq("github.com")).
+		SetHost(gomock.Eq("https://github.com")).
 		Return().
 		Times(1)
 
@@ -496,7 +496,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddSSH() {
 			Times(1),
 	)
 
-	remoteAddHandler(mockCmd, []string{"github.com"})
+	remoteAddHandler(mockCmd, []string{"https://github.com"})
 }
 
 func TestRemoteCmdSuite(t *testing.T) {
