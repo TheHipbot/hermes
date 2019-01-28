@@ -20,6 +20,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/TheHipbot/hermes/pkg/credentials"
+
+	fscred "github.com/TheHipbot/hermes/pkg/credentials/osfs"
 	"github.com/TheHipbot/hermes/pkg/fs"
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/repo"
@@ -44,6 +47,7 @@ var (
 		"ssh",
 		"http",
 	}
+	credentialsStorer credentials.Storer
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -193,6 +197,9 @@ func init() {
 	viper.SetDefault("target_file", ".hermes_target")
 	viper.SetDefault("cache_file", "cache.json")
 	viper.SetDefault("alias_name", "hermes")
+	viper.SetDefault("remotes_file", "remotes.json")
+	viper.SetDefault("credentials_type", "file")
+	viper.SetDefault("credentials_file", "credentials.yml")
 
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
@@ -231,4 +238,20 @@ func initConfig() {
 		fmt.Println("Cache file could not be opened or created")
 	}
 	store = storage.NewStorage(cacheFile)
+
+	switch viper.GetString("credentials_type") {
+	default:
+		if file, err := appFs.Create(fmt.Sprintf("%s/%s",
+			viper.GetString("config_path"),
+			viper.GetString("credentials_file"))); err != nil {
+			fmt.Println(err)
+			fmt.Println("Credentials file could not be opened or created, no credentials will be persisted")
+		} else {
+			credentialsStorer = fscred.NewFSStorer(file)
+		}
+	}
+
+	if credentialsStorer == nil {
+		credentialsStorer = credentials.NewMemStorer()
+	}
 }
