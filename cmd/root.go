@@ -76,7 +76,7 @@ var getCmd = &cobra.Command{
 func getHandler(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		fmt.Println("Requires repo as an argument")
-		os.Exit(1)
+		os.Exit(ExitInvalidArguments)
 	}
 	repoName := args[0]
 	pathToRepo := fmt.Sprintf("%s%s/", viper.GetString("repo_path"), repoName)
@@ -90,7 +90,15 @@ func getHandler(cmd *cobra.Command, args []string) {
 		selectedRepo = cachedRepos[0]
 		remote, _ = store.SearchRemote(strings.Split(selectedRepo.Name, "/")[0])
 	} else if len(cachedRepos) == 0 {
-		remote, ok := store.SearchRemote(strings.Split(repoName, "/")[0])
+		parts := strings.Split(repoName, "/")
+		if len(parts) < 3 {
+			fmt.Printf(`No repo found, a new repo must be in the form
+<remote hostname>/<user or group>/<repo name>
+`)
+			os.Exit(ExitInvalidArguments)
+		}
+		remoteName := parts[0]
+		remote, ok := store.SearchRemote(remoteName)
 		selectedRepo = storage.Repository{
 			Name: repoName,
 			Path: pathToRepo,
@@ -106,10 +114,10 @@ func getHandler(cmd *cobra.Command, args []string) {
 			p := prompt.CreateProtoclSelectPrompt(prompter, protocols)
 			i, _, err := p.Run()
 			if err != nil {
-				fmt.Printf("error retrieving input")
+				fmt.Printf("Error retrieving input\n")
 				os.Exit(1)
 			}
-			remote, _ = store.SearchRemote(strings.Split(repoName, "/")[0])
+			remote, _ = store.SearchRemote(remoteName)
 			remote.Protocol = protocols[i]
 		}
 		store.Save()
@@ -165,7 +173,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(ExitCannotExecute)
 	}
 }
 
@@ -184,7 +192,7 @@ func init() {
 	viper.SetDefault("config_path", fmt.Sprintf("%s/.hermes/", home))
 	viper.SetDefault("target_file", ".hermes_target")
 	viper.SetDefault("cache_file", "cache.json")
-	viper.SetDefault("remotes_file", "remotes.json")
+	viper.SetDefault("alias_name", "hermes")
 
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)

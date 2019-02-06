@@ -56,6 +56,7 @@ Here is a list of the current supported config keys and values along with their 
 * `config_path` (default: `$HOME/.hermes/`) - the directory where hermes will store configuration files such as its internal cache and the hermes target file. **NOTE:** you will want to set this in your hermes configuration file **BEFORE** you run `hermes setup` since that command will create the config folder. 
 * `target_file` (default: `.hermes_target`) -  after running the hermes command, if there is a valid target (e.g. repo that you have cloned or want to jump to), hermes writes out the full path into the hermes target file. From there, the alias in your shell profile will read this, jump to the directory and then remove the target file. **NOTE:** `target_file` only specifies the file name, the file will be created in the `config_path`. if you change the target file after setting the hermes alias, you would need to open a new terminal session or re-source your profile file for the alias to realize the change
 * `cache_file` (default: `cache.json`) - hermes stores a cache of repos it is aware of to allow for tab completion and prompts. this will be in json format. **NOTE:** `cache_file` only specifies the file name, the file will be created in the `config_path`
+* `alias_name` (default: `hermes`) - the name of the alias function which calls through to the hermes binary. this will be the command you run when using hermes.
 
 <a name="example-config"></a>
 ### Example .hermes.yml File
@@ -65,6 +66,7 @@ repo_path: /Users/jeremychambers/test-repos/
 config_path: /Users/jeremychambers/.hermes-config/
 cache_file: cached-repos.json
 target_file: .hermes_target_file
+alias_name: hit
 ```
 
 ## Usage
