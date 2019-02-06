@@ -30,6 +30,7 @@ var aliasCmd = &cobra.Command{
 type AliasData struct {
 	ConfigDir      string
 	TargetFileName string
+	AliasName      string
 }
 
 func generateAlias() (string, error) {
@@ -37,15 +38,18 @@ func generateAlias() (string, error) {
 	data := AliasData{
 		ConfigDir:      viper.GetString("config_path"),
 		TargetFileName: viper.GetString("target_file"),
+		AliasName:      viper.GetString("alias_name"),
 	}
 
 	aliasTemplate := `
-function hermes() {
-	export HERMES_BIN="$(which hermes)"
+function {{ .AliasName }}() {
+	local HERMES_BIN="$(which hermes)"
 	$HERMES_BIN $@
+	local EXIT_STATUS=$?
 	if [ -f {{ .ConfigDir }}{{ .TargetFileName }} ]; then
 		cd $(cat {{ .ConfigDir }}{{ .TargetFileName }}) && rm {{ .ConfigDir }}{{ .TargetFileName }}
 	fi
+	return $EXIT_STATUS
 }
 	
 `
