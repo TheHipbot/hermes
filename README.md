@@ -1,4 +1,4 @@
-# Hermes - Messenger of the Version Control Gods
+# Hermes - Messenger of the Version Control Gods [![version](https://img.shields.io/github/tag/thehipbot/hermes.svg)](https://github.com/TheHipbot/hermes/releases)
 
 **Hermes allows you to manage your git repositories from the command line**
 
