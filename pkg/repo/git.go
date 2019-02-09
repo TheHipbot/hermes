@@ -89,7 +89,7 @@ func getSSHAuth(host string) (transport.AuthMethod, error) {
 		if keyPath, err := pathIfExists(path); err == nil {
 			pk, err := sshgit.NewPublicKeysFromFile("git", keyPath, "")
 			if err != nil {
-				return nil, err
+				return &sshgit.PublicKeys{}, err
 			}
 			pk.HostKeyCallbackHelper = sshgit.HostKeyCallbackHelper{
 				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
