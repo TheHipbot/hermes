@@ -102,6 +102,9 @@ func (s *storage) AddRepository(repo *Repository) error {
 	remote := strings.Split(repo.Name, "/")[0]
 
 	if r, ok := s.Remotes[remote]; ok {
+		if _, ok := r.Repos[repo.Name]; ok {
+			return errors.New("Repo already exists")
+		}
 		r.Repos[repo.Name] = repo
 	} else {
 		remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))

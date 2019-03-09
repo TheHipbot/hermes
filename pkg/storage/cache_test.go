@@ -194,6 +194,26 @@ func (s *StorageSuite) TestCacheAdd() {
 	s.Equal(repoCnt+2, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
 }
 
+func (s *StorageSuite) TestCacheAddSameRepoMultipleTimes() {
+	var results []Repository
+
+	repoCnt := len(testStorage.Remotes["github.com"].Repos)
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("weather")
+	s.Len(results, 1, "There should be the new repo")
+	s.Equal(repoCnt+1, len(testStorage.Remotes["github.com"].Repos), "The new repo should be stored with existing remote")
+
+	testStorage.AddRepository(&Repository{
+		Name: "github.com/TheHipbot/weather",
+		Path: "/repos/",
+	})
+	results = testStorage.SearchRepositories("weather")
+	s.Len(results, 1, "There should still only be one entry")
+}
+
 func (s *StorageSuite) TestCacheAddNewRemote() {
 	var results []Repository
 
