@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"sort"
 	"strings"
 )
 
@@ -48,8 +49,7 @@ func NewStorage(storer storer) Storage {
 	}
 }
 
-// Open the cache from the cache.json file in config
-// directory
+// Open the cache from the provided storer
 func (s *storage) Open() {
 	_, err := s.storer.Seek(0, 0)
 	raw, err := ioutil.ReadAll(s.storer)
@@ -97,12 +97,12 @@ func (s *storage) Close() error {
 	return s.storer.Close()
 }
 
-// AddRepository a repo to the cache
+// AddRepository adds a repo to the cache
 func (s *storage) AddRepository(repo *Repository) error {
 	remote := strings.Split(repo.Name, "/")[0]
 
 	if r, ok := s.Remotes[remote]; ok {
-		s.Remotes[remote].Repos = append(r.Repos, *repo)
+		r.Repos[repo.Name] = repo
 	} else {
 		remoteURL, err := url.Parse(fmt.Sprintf("https://%s", remote))
 		if err != nil {
@@ -112,8 +112,8 @@ func (s *storage) AddRepository(repo *Repository) error {
 		s.Remotes[remote] = &Remote{
 			Name: remote,
 			URL:  remoteURL.String(),
-			Repos: []Repository{
-				*repo,
+			Repos: map[string]*Repository{
+				repo.Name: repo,
 			},
 		}
 	}
@@ -123,24 +123,16 @@ func (s *storage) AddRepository(repo *Repository) error {
 
 // RemoveRepository a repo from the cache
 func (s *storage) RemoveRepository(name string) error {
-	found := false
 	remote := strings.Split(name, "/")[0]
 
 	if r, ok := s.Remotes[remote]; ok {
-		for i, repo := range r.Repos {
-			if strings.Compare(repo.Name, name) == 0 {
-				r.Repos = append(r.Repos[:i], r.Repos[i+1:]...)
-				found = true
-				break
-			}
+		if _, ok := r.Repos[name]; ok {
+			delete(r.Repos, name)
+			return nil
 		}
 	}
 
-	if !found {
-		return errors.New("Repo not found")
-	}
-
-	return nil
+	return errors.New("Repo not found")
 }
 
 // AddRemote adds a remote to the cache
@@ -153,7 +145,7 @@ func (s *storage) AddRemote(url, name, protocol string) error {
 		Name:     name,
 		URL:      url,
 		Protocol: protocol,
-		Repos:    []Repository{},
+		Repos:    map[string]*Repository{},
 	}
 
 	s.Remotes[name] = remote
@@ -166,16 +158,20 @@ func (s *storage) SearchRepositories(needle string) []Repository {
 	lowerSearch := strings.ToLower(needle)
 	var results []Repository
 	for _, remote := range s.Remotes {
-		for _, repo := range remote.Repos {
-			if strings.Contains(strings.ToLower(repo.Name), lowerSearch) {
-				results = append(results, repo)
+		for name, repo := range remote.Repos {
+			if strings.Contains(strings.ToLower(name), lowerSearch) {
+				results = append(results, *repo)
 			}
 		}
 	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
 	return results
 }
 
-// SearchRemote
+// SearchRemote will return the Remote and true if present or an
+// empty remote and false if not
 func (s *storage) SearchRemote(remote string) (*Remote, bool) {
 	ptr, ok := s.Remotes[remote]
 	if ok {

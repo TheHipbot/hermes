@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gopkg.in/src-d/go-billy.v4"
+	billy "gopkg.in/src-d/go-billy.v4"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,38 +52,38 @@ func (s *RootCmdSuite) TestGetHandlerSingleCachedRepo() {
 			"github.com": {
 				"name": "github.com",
 				"url":  "https://github.com",
-				"repos": [
-					{
+				"repos": {
+					"github.com/TheHipbot/hermes": {
 						"name": "github.com/TheHipbot/hermes",
 						"repo_path": "/repos/github.com/TheHipbot/hermes"
 					},
-					{
+					"github.com/TheHipbot/dotfiles": {
 						"name": "github.com/TheHipbot/dotfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dotfiles"
 					},
-					{
+					"github.com/TheHipbot/dockerfiles": {
 						"name": "github.com/TheHipbot/dockerfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dockerfiles"
 					},
-					{
+					"github.com/src-d/go-git": {
 						"name": "github.com/src-d/go-git",
 						"repo_path": "/repos/github.com/src-d/go-git"
 					}
-				]
+				}
 			},
 			"gitlab.com": {
 				"name": "gitlab.com",
 				"url":  "https://gitlab.com",
-				"repos": [
-					{
+				"repos": {
+					"gitlab.com/gitlab-org/gitlab-ce": {
 						"name": "gitlab.com/gitlab-org/gitlab-ce",
 						"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
 					},
-					{
+					"gitlab.com/gnachman/iterm2": {
 						"name": "gitlab.com/gnachman/iterm2",
 						"repo_path": "/repos/gitlab.com/gnachman/iterm2"
 					}
-				]
+				}
 			}
 		}
 	}`))
@@ -122,55 +122,56 @@ func (s *RootCmdSuite) TestGetHandlerMultipleCachedRepos() {
 			"github.com": {
 				"name": "github.com",
 				"url":  "https://github.com",
-				"repos": [
-					{
+				"repos": {
+					"github.com/TheHipbot/hermes": {
 						"name": "github.com/TheHipbot/hermes",
 						"repo_path": "/repos/github.com/TheHipbot/hermes"
 					},
-					{
+					"github.com/TheHipbot/dotfiles": {
 						"name": "github.com/TheHipbot/dotfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dotfiles"
 					},
-					{
+					"github.com/TheHipbot/dockerfiles": {
 						"name": "github.com/TheHipbot/dockerfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dockerfiles"
 					},
-					{
+					"github.com/src-d/go-git": {
 						"name": "github.com/src-d/go-git",
 						"repo_path": "/repos/github.com/src-d/go-git"
 					}
-				]
+				}
 			},
 			"gitlab.com": {
 				"name": "gitlab.com",
 				"url":  "https://gitlab.com",
-				"repos": [
-					{
+				"repos": {
+					"gitlab.com/gitlab-org/gitlab-ce": {
 						"name": "gitlab.com/gitlab-org/gitlab-ce",
 						"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
 					},
-					{
+					"gitlab.com/gnachman/iterm2": {
 						"name": "gitlab.com/gnachman/iterm2",
 						"repo_path": "/repos/gitlab.com/gnachman/iterm2"
 					}
-				]
+				}
 			}
 		}
 	}`))
 	cacheFile.Truncate(int64(p))
 	store.Open()
+	// results should be in alphabetical order
 	repos := []storage.Repository{
 		storage.Repository{
-			Name: "github.com/TheHipbot/hermes",
-			Path: "/repos/github.com/TheHipbot/hermes",
+			Name: "github.com/TheHipbot/dockerfiles",
+			Path: "/repos/github.com/TheHipbot/dockerfiles",
 		},
 		storage.Repository{
 			Name: "github.com/TheHipbot/dotfiles",
 			Path: "/repos/github.com/TheHipbot/dotfiles",
 		},
 		storage.Repository{
-			Name: "github.com/TheHipbot/dockerfiles",
-			Path: "/repos/github.com/TheHipbot/dockerfiles",
+			Name: "github.com/TheHipbot/hermes",
+			Path: "/repos/github.com/TheHipbot/hermes",
 		},
 	}
 

@@ -36,20 +36,20 @@ func (s *StorageSuite) SetupTest() {
 			"github.com": &Remote{
 				Name: "github.com",
 				URL:  githubURL.String(),
-				Repos: []Repository{
-					Repository{
+				Repos: map[string]*Repository{
+					"github.com/TheHipbot/hermes": &Repository{
 						Name: "github.com/TheHipbot/hermes",
 						Path: "/repos/github.com/TheHipbot/hermes",
 					},
-					Repository{
+					"github.com/TheHipbot/dotfiles": &Repository{
 						Name: "github.com/TheHipbot/dotfiles",
 						Path: "/repos/github.com/TheHipbot/dotfiles",
 					},
-					Repository{
+					"github.com/TheHipbot/dockerfiles": &Repository{
 						Name: "github.com/TheHipbot/dockerfiles",
 						Path: "/repos/github.com/TheHipbot/dockerfiles",
 					},
-					Repository{
+					"github.com/src-d/go-git": &Repository{
 						Name: "github.com/src-d/go-git",
 						Path: "/repos/github.com/src-d/go-git",
 					},
@@ -58,12 +58,12 @@ func (s *StorageSuite) SetupTest() {
 			"gitlab.com": &Remote{
 				Name: "gitlab.com",
 				URL:  gitLabURL.String(),
-				Repos: []Repository{
-					Repository{
+				Repos: map[string]*Repository{
+					"gitlab.com/gitlab-org/gitlab-ce": &Repository{
 						Name: "gitlab.com/gitlab-org/gitlab-ce",
 						Path: "/repos/gitlab.com/gitlab-org/gitlab-ce",
 					},
-					Repository{
+					"gitlab.com/gnachman/iterm2": &Repository{
 						Name: "gitlab.com/gnachman/iterm2",
 						Path: "/repos/gitlab.com/gnachman/iterm2",
 					},
@@ -88,38 +88,38 @@ func (s *StorageSuite) TestStorageOpenWithFileData() {
 			"github.com": {
 				"name": "github.com",
 				"url":  "https://github.com",
-				"repos": [
-					{
+				"repos": {
+					"github.com/TheHipbot/hermes": {
 						"name": "github.com/TheHipbot/hermes",
 						"repo_path": "/repos/github.com/TheHipbot/hermes"
 					},
-					{
+					"github.com/TheHipbot/dotfiles": {
 						"name": "github.com/TheHipbot/dotfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dotfiles"
 					},
-					{
+					"github.com/TheHipbot/dockerfiles": {
 						"name": "github.com/TheHipbot/dockerfiles",
 						"repo_path": "/repos/github.com/TheHipbot/dockerfiles"
 					},
-					{
+					"github.com/src-d/go-git": {
 						"name": "github.com/src-d/go-git",
 						"repo_path": "/repos/github.com/src-d/go-git"
 					}
-				]
+				}
 			},
 			"gitlab.com": {
 				"name": "gitlab.com",
 				"url":  "https://gitlab.com",
-				"repos": [
-					{
+				"repos": {
+					"gitlab.com/gitlab-org/gitlab-ce": {
 						"name": "gitlab.com/gitlab-org/gitlab-ce",
 						"repo_path": "/repos/gitlab.com/gitlab-org/gitlab-ce"
 					},
-					{
+					"gitlab.com/gnachman/iterm2": {
 						"name": "gitlab.com/gnachman/iterm2",
 						"repo_path": "/repos/gitlab.com/gnachman/iterm2"
 					}
-				]
+				}
 			}
 		}
 	}`))
@@ -132,10 +132,10 @@ func (s *StorageSuite) TestStorageOpenWithFileData() {
 	s.Equal(storage.Version, "0.0.1", "storage format version should be 0.0.1")
 	s.NotNil(storage.Remotes["github.com"], "There should be repos in the github.com remote")
 	s.Equal(len(storage.Remotes["github.com"].Repos), 4, "There should be 4 repos in the github.com remote")
-	s.Equal(storage.Remotes["github.com"].Repos[0].Name, "github.com/TheHipbot/hermes", "The first repo in the github.com remote should be hermes")
+	s.Equal(storage.Remotes["github.com"].Repos["github.com/TheHipbot/hermes"].Name, "github.com/TheHipbot/hermes", "github.com/TheHipbot/herme should be a repo in the github.com remote should be hermes")
 	s.NotNil(storage.Remotes["gitlab.com"], "There should be repos in the gitlab.com remote")
 	s.Equal(len(storage.Remotes["gitlab.com"].Repos), 2, "There should be 4 repos in the gitlab.com remote")
-	s.Equal(storage.Remotes["gitlab.com"].Repos[0].Name, "gitlab.com/gitlab-org/gitlab-ce", "The first repo in the gitlab.com remote should be gitlab-ce")
+	s.Equal(storage.Remotes["gitlab.com"].Repos["gitlab.com/gitlab-org/gitlab-ce"].Name, "gitlab.com/gitlab-org/gitlab-ce", "gitlab.com/gitlab-org/gitlab-ce should be a repo in the gitlab.com remote should be gitlab-ce")
 }
 
 func (s *StorageSuite) TestStorageOpenWithReadError() {
@@ -275,10 +275,11 @@ func (s *StorageSuite) TestRemoveRepoAndSave() {
 func (s *StorageSuite) TestStorageSearchWithResults() {
 	var results []Repository
 
+	// Results should be in alphabetical order by repo name
 	results = testStorage.SearchRepositories("files")
 	s.Len(results, 2, "There are 2 repos with files in the name")
-	s.Equal(results[0].Name, "github.com/TheHipbot/dotfiles")
-	s.Equal(results[1].Name, "github.com/TheHipbot/dockerfiles")
+	s.Equal(results[0].Name, "github.com/TheHipbot/dockerfiles")
+	s.Equal(results[1].Name, "github.com/TheHipbot/dotfiles")
 
 	results = testStorage.SearchRepositories("gitlab")
 	s.Len(results, 2, "There are 2 repos with files in the name")
@@ -289,16 +290,17 @@ func (s *StorageSuite) TestStorageSearchWithResults() {
 func (s *StorageSuite) TestStorageSearchCaseInSensitiveWithResults() {
 	var results []Repository
 
+	// Results should be in alphabetical order by repo name
 	results = testStorage.SearchRepositories("FILES")
 	s.Len(results, 2, "There are 2 repos with files in the name")
-	s.Equal(results[0].Name, "github.com/TheHipbot/dotfiles")
-	s.Equal(results[1].Name, "github.com/TheHipbot/dockerfiles")
+	s.Equal(results[0].Name, "github.com/TheHipbot/dockerfiles")
+	s.Equal(results[1].Name, "github.com/TheHipbot/dotfiles")
 
 	results = testStorage.SearchRepositories("thehipbot")
 	s.Len(results, 3, "There are 3 repos with files in the name")
-	s.Equal(results[0].Name, "github.com/TheHipbot/hermes")
+	s.Equal(results[0].Name, "github.com/TheHipbot/dockerfiles")
 	s.Equal(results[1].Name, "github.com/TheHipbot/dotfiles")
-	s.Equal(results[2].Name, "github.com/TheHipbot/dockerfiles")
+	s.Equal(results[2].Name, "github.com/TheHipbot/hermes")
 }
 
 func (s *StorageSuite) TestStorageSearchWithoutResults() {
