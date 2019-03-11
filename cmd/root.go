@@ -175,10 +175,16 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 // Execute runs the root command
 func Execute() {
+	defer cleanup()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
+		cleanup()
 		os.Exit(ExitCannotExecute)
 	}
+}
+
+func cleanup() {
+	credentialsStorer.Close()
 }
 
 func init() {
@@ -241,13 +247,13 @@ func initConfig() {
 
 	switch viper.GetString("credentials_type") {
 	default:
-		if file, err := appFs.Create(fmt.Sprintf("%s/%s",
-			viper.GetString("config_path"),
-			viper.GetString("credentials_file"))); err != nil {
-			fmt.Println(err)
-			fmt.Println("Credentials file could not be opened or created, no credentials will be persisted")
-		} else {
+		credentialFileName := fmt.Sprintf("%s/%s", viper.GetString("config_path"), viper.GetString("credentials_file"))
+		if file, err := appFs.OpenFile(credentialFileName, os.O_RDWR, 0666); err == nil {
 			credentialsStorer = fscred.NewFSStorer(file)
+		} else if file, err := appFs.Create(credentialFileName); err == nil {
+			credentialsStorer = fscred.NewFSStorer(file)
+		} else {
+			fmt.Println("Credentials file could not be opened or created, no credentials will be persisted")
 		}
 	}
 

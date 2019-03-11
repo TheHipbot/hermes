@@ -1,4 +1,4 @@
-//go:generate mockgen -package mock -destination ../../mock/mock_credentials.go github.com/TheHipbot/hermes/pkg/credentials Storer
+//go:generate mockgen -package mock -destination ../../mock/mock_credentials.go -mock_names Storer=MockCredentialsStorer github.com/TheHipbot/hermes/pkg/credentials Storer
 package credentials
 
 import "errors"
@@ -15,9 +15,9 @@ var (
 
 // Credential stores a credential and its type
 type Credential struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Token    string `yaml:"token"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Token    string `yaml:"token,omitempty"`
 	Type     string `yaml:"type"`
 }
 

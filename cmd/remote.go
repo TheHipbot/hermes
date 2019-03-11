@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/TheHipbot/hermes/pkg/credentials"
+
 	"github.com/TheHipbot/hermes/pkg/prompt"
 	"github.com/TheHipbot/hermes/pkg/remote"
 	"github.com/TheHipbot/hermes/pkg/storage"
@@ -54,14 +56,14 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	remoteURL, err := url.Parse(args[0])
 	remoteName := remoteURL.Hostname()
 	if err != nil {
-		fmt.Printf("Valid remote URL required")
+		fmt.Println("Valid remote URL required")
 		os.Exit(1)
 	}
 
 	p := prompt.CreateDriverSelectPrompt(prompter, drivers)
 	i, _, err := p.Run()
 	if err != nil {
-		fmt.Printf("Error retrieving input")
+		fmt.Println("Error retrieving input")
 		os.Exit(1)
 	}
 
@@ -72,10 +74,19 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	auth := remote.Auth{}
 	switch driver.AuthType() {
 	case "token":
-		ip := prompt.CreateTokenInputPrompt(prompter)
-		// TODO: handle error here
-		token, _ := ip.Run()
-		auth.Token = token
+		if cred, err := credentialsStorer.Get(remoteName); err != nil {
+			ip := prompt.CreateTokenInputPrompt(prompter)
+			// TODO: handle error here
+			// TODO: reprompt on failed auth
+			token, _ := ip.Run()
+			credentialsStorer.Put(remoteName, credentials.Credential{
+				Type:  "token",
+				Token: token,
+			})
+			auth.Token = token
+		} else {
+			auth.Token = cred.Token
+		}
 	default:
 	}
 
