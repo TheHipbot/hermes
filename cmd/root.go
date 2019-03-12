@@ -204,7 +204,7 @@ func init() {
 	viper.SetDefault("cache_file", "cache.json")
 	viper.SetDefault("alias_name", "hermes")
 	viper.SetDefault("remotes_file", "remotes.json")
-	viper.SetDefault("credentials_type", "file")
+	viper.SetDefault("credentials_type", "none")
 	viper.SetDefault("credentials_file", "credentials.yml")
 
 	rootCmd.AddCommand(setupCmd)
@@ -246,7 +246,7 @@ func initConfig() {
 	store = storage.NewStorage(cacheFile)
 
 	switch viper.GetString("credentials_type") {
-	default:
+	case "file":
 		credentialFileName := fmt.Sprintf("%s/%s", viper.GetString("config_path"), viper.GetString("credentials_file"))
 		if file, err := appFs.OpenFile(credentialFileName, os.O_RDWR, 0666); err == nil {
 			credentialsStorer = fscred.NewFSStorer(file)

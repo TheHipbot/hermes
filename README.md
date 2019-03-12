@@ -57,6 +57,10 @@ Here is a list of the current supported config keys and values along with their 
 * `target_file` (default: `.hermes_target`) -  after running the hermes command, if there is a valid target (e.g. repo that you have cloned or want to jump to), hermes writes out the full path into the hermes target file. From there, the alias in your shell profile will read this, jump to the directory and then remove the target file. **NOTE:** `target_file` only specifies the file name, the file will be created in the `config_path`. if you change the target file after setting the hermes alias, you would need to open a new terminal session or re-source your profile file for the alias to realize the change
 * `cache_file` (default: `cache.json`) - hermes stores a cache of repos it is aware of to allow for tab completion and prompts. this will be in json format. **NOTE:** `cache_file` only specifies the file name, the file will be created in the `config_path`
 * `alias_name` (default: `hermes`) - the name of the alias function which calls through to the hermes binary. this will be the command you run when using hermes.
+* `credentials_type` (default: `none`) - the type of storage which hermes user to store user provided credentials, supported types described below
+    * `none` - this will not store the credentials at all, any time a call is made that requires authentication credentials must be passed into hermes
+    * `file` - this is the default type and will store provided credentials in yaml file in plaintext *NOTE: this is by no means a secure solution and its recommended not to use this in conjunction with usernames and passwords*
+* `credentials_file` (default: `credentials.yml`) - when using the `file` credential type, this is the filename in the config directory in which the credentials will be stored
 
 <a name="example-config"></a>
 ### Example .hermes.yml File
@@ -67,6 +71,8 @@ config_path: /Users/jeremychambers/.hermes-config/
 cache_file: cached-repos.json
 target_file: .hermes_target_file
 alias_name: hit
+credentials_type: file
+credentials_file: my_credentials.yml
 ```
 
 ## Usage
