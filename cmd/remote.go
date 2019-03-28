@@ -53,6 +53,8 @@ var remoteAddCmd = &cobra.Command{
 }
 
 func remoteAddHandler(cmd *cobra.Command, args []string) {
+	defer credentialsStorer.Close()
+
 	remoteURL, err := url.Parse(args[0])
 	remoteName := remoteURL.Hostname()
 	if err != nil {

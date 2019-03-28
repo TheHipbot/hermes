@@ -175,16 +175,10 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 // Execute runs the root command
 func Execute() {
-	defer cleanup()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		cleanup()
 		os.Exit(ExitCannotExecute)
 	}
-}
-
-func cleanup() {
-	credentialsStorer.Close()
 }
 
 func init() {

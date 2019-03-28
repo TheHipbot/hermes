@@ -108,6 +108,12 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 		Return(credentials.Credential{}, credentials.ErrCredentialNotFound).
 		Times(1)
 
+	suite.mockCredentialStorer.
+		EXPECT().
+		Close().
+		Return(nil).
+		Times(1)
+
 	gomock.InOrder(
 		// prompt for token
 		mockPrompter.
@@ -279,6 +285,12 @@ func (suite *RemoteCmdSuite) TestWithStoredTokenAuth() {
 			Type:  "token",
 			Token: "1234abcd",
 		}, nil).
+		Times(1)
+
+	suite.mockCredentialStorer.
+		EXPECT().
+		Close().
+		Return(nil).
 		Times(1)
 
 	mockPrompter.
@@ -478,6 +490,12 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 			AddRemote("https://github.com", "github.com", "https").
 			Return(nil).
 			Times(1),
+
+		suite.mockCredentialStorer.
+			EXPECT().
+			Close().
+			Return(nil).
+			Times(1),
 	)
 
 	gomock.InOrder(
@@ -596,6 +614,12 @@ func (suite *RemoteCmdSuite) TestRemoteAddSSH() {
 		EXPECT().
 		Get("github.com").
 		Return(credentials.Credential{}, credentials.ErrCredentialNotFound).
+		Times(1)
+
+	suite.mockCredentialStorer.
+		EXPECT().
+		Close().
+		Return(nil).
 		Times(1)
 
 	gomock.InOrder(
