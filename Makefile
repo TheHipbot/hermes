@@ -13,8 +13,13 @@ GOOS := darwin
 GOARCH := amd64
 
 # Build info
-VERSION := 0.0.1
+VERSION := `git describe --tags`
 BUILD := `git rev-parse --short HEAD`
+BUILD_TIME := `date`
+
+LDFLAGS := "-X github.com/TheHipbot/hermes/cmd.version=${VERSION} \
+ -X github.com/TheHipbot/hermes/cmd.commit=${BUILD} \
+ -X 'github.com/TheHipbot/hermes/cmd.timestamp=${BUILD_TIME}'" 
 
 # OS's and Architectures
 goos := darwin \
@@ -40,10 +45,10 @@ vet:
 
 .PHONY: install
 install: 
-	$(GOCMD) install
+	$(GOCMD) install -ldflags ${LDFLAGS}
 
 build: $(SOURCES)
-	GOOS=${GOOS} GOARCH=${GOARCH} $(GOCMD) build -o ${BIN_DIR}${BINARY}
+	GOOS=${GOOS} GOARCH=${GOARCH} $(GOCMD) build -ldflags ${LDFLAGS} -o ${BIN_DIR}${BINARY}
 
 .PHONY: generate
 generate:
