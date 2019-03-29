@@ -211,6 +211,7 @@ func init() {
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(remoteCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
