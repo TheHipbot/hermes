@@ -35,6 +35,7 @@ func (m *MockCredentialsStorer) EXPECT() *MockCredentialsStorerMockRecorder {
 
 // Close mocks base method
 func (m *MockCredentialsStorer) Close() error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Close")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -42,11 +43,13 @@ func (m *MockCredentialsStorer) Close() error {
 
 // Close indicates an expected call of Close
 func (mr *MockCredentialsStorerMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockCredentialsStorer)(nil).Close))
 }
 
 // Get mocks base method
 func (m *MockCredentialsStorer) Get(arg0 string) (credentials.Credential, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0)
 	ret0, _ := ret[0].(credentials.Credential)
 	ret1, _ := ret[1].(error)
@@ -55,11 +58,13 @@ func (m *MockCredentialsStorer) Get(arg0 string) (credentials.Credential, error)
 
 // Get indicates an expected call of Get
 func (mr *MockCredentialsStorerMockRecorder) Get(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCredentialsStorer)(nil).Get), arg0)
 }
 
 // Put mocks base method
 func (m *MockCredentialsStorer) Put(arg0 string, arg1 credentials.Credential) error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -67,5 +72,6 @@ func (m *MockCredentialsStorer) Put(arg0 string, arg1 credentials.Credential) er
 
 // Put indicates an expected call of Put
 func (mr *MockCredentialsStorerMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCredentialsStorer)(nil).Put), arg0, arg1)
 }

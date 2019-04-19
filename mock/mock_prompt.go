@@ -36,6 +36,7 @@ func (m *MockInputPrompt) EXPECT() *MockInputPromptMockRecorder {
 
 // Run mocks base method
 func (m *MockInputPrompt) Run() (string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run")
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -44,6 +45,7 @@ func (m *MockInputPrompt) Run() (string, error) {
 
 // Run indicates an expected call of Run
 func (mr *MockInputPromptMockRecorder) Run() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockInputPrompt)(nil).Run))
 }
 
@@ -72,6 +74,7 @@ func (m *MockSelectPrompt) EXPECT() *MockSelectPromptMockRecorder {
 
 // Run mocks base method
 func (m *MockSelectPrompt) Run() (int, string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run")
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(string)
@@ -81,6 +84,7 @@ func (m *MockSelectPrompt) Run() (int, string, error) {
 
 // Run indicates an expected call of Run
 func (mr *MockSelectPromptMockRecorder) Run() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockSelectPrompt)(nil).Run))
 }
 
@@ -109,6 +113,7 @@ func (m *MockFactory) EXPECT() *MockFactoryMockRecorder {
 
 // CreateInputPrompt mocks base method
 func (m *MockFactory) CreateInputPrompt(arg0 string) prompt.InputPrompt {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateInputPrompt", arg0)
 	ret0, _ := ret[0].(prompt.InputPrompt)
 	return ret0
@@ -116,11 +121,13 @@ func (m *MockFactory) CreateInputPrompt(arg0 string) prompt.InputPrompt {
 
 // CreateInputPrompt indicates an expected call of CreateInputPrompt
 func (mr *MockFactoryMockRecorder) CreateInputPrompt(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInputPrompt", reflect.TypeOf((*MockFactory)(nil).CreateInputPrompt), arg0)
 }
 
 // CreateSelectPrompt mocks base method
 func (m *MockFactory) CreateSelectPrompt(arg0 string, arg1 interface{}, arg2 *promptui.SelectTemplates) prompt.SelectPrompt {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateSelectPrompt", arg0, arg1, arg2)
 	ret0, _ := ret[0].(prompt.SelectPrompt)
 	return ret0
@@ -128,5 +135,6 @@ func (m *MockFactory) CreateSelectPrompt(arg0 string, arg1 interface{}, arg2 *pr
 
 // CreateSelectPrompt indicates an expected call of CreateSelectPrompt
 func (mr *MockFactoryMockRecorder) CreateSelectPrompt(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSelectPrompt", reflect.TypeOf((*MockFactory)(nil).CreateSelectPrompt), arg0, arg1, arg2)
 }

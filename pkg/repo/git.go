@@ -10,21 +10,20 @@ import (
 	"golang.org/x/crypto/ssh"
 	billy "gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/osfs"
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/cache"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	sshgit "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
-	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
 var (
 	appFs         billy.Filesystem
-	defaultCloner cloner
+	defaultCloner Cloner
 )
 
 func init() {
 	appFs = osfs.New("")
-	defaultCloner = &gitCloner{}
+	defaultCloner = &GitCloner{
+		Fs: appFs,
+	}
 }
 
 // GitRepository holds info for git repos and
@@ -34,7 +33,7 @@ type GitRepository struct {
 	Name     string
 	URL      string
 	Protocol string
-	cloner   cloner
+	Cloner   Cloner
 }
 
 // NewGitRepository creates a GitRepository
@@ -43,19 +42,15 @@ func NewGitRepository(name, url string) *GitRepository {
 		Fs:     appFs,
 		Name:   name,
 		URL:    url,
-		cloner: defaultCloner,
+		Cloner: defaultCloner,
 	}
 }
 
 // Clone git repository to path
 func (gr *GitRepository) Clone(path string) error {
-	repoFs, _ := gr.Fs.Chroot(path)
-	dot, _ := repoFs.Chroot(".git")
-	storer := filesystem.NewStorage(dot, cache.NewObjectLRU(cache.DefaultMaxSize))
 
-	opts := &git.CloneOptions{
-		URL:      gr.URL,
-		Progress: os.Stdout,
+	opts := &CloneOptions{
+		URL: gr.URL,
 	}
 
 	switch gr.Protocol {
@@ -74,7 +69,7 @@ func (gr *GitRepository) Clone(path string) error {
 		opts.Auth = a
 	}
 
-	err := gr.cloner.clone(storer, repoFs, opts)
+	err := gr.Cloner.Clone(path, opts)
 	return err
 }
 

@@ -8,10 +8,8 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/suite"
-	billy "gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/memfs"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
 var (
@@ -41,6 +39,15 @@ type GitRepositorySuite struct {
 	suite.Suite
 }
 
+type testCloner struct {
+	suite *GitRepositorySuite
+}
+
+func (t *testCloner) Clone(path string, opts *CloneOptions) error {
+	t.suite.NotNil(opts.Auth)
+	return nil
+}
+
 func (suite *GitRepositorySuite) SetupTest() {
 	appFs = memfs.New()
 }
@@ -52,6 +59,9 @@ func (suite *GitRepositorySuite) TestCloneRepo() {
 
 	repo := NewGitRepository(testRepoName, repoURL.String())
 	repo.Fs = appFs
+	repo.Cloner = &GitCloner{
+		Fs: appFs,
+	}
 
 	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
 
@@ -81,20 +91,14 @@ func (suite *GitRepositorySuite) TestCloneExistingRepo() {
 	repoURL, err := url.Parse("https://github.com/TheHipbot/hermes")
 	suite.Nil(err, "Test URL could not be parsed")
 
+	defaultCloner = &GitCloner{
+		Fs: appFs,
+	}
 	repo := NewGitRepository(testRepoName, repoURL.String())
 	repo.Fs = appFs
 
 	suite.Nil(repo.Clone(pathToClone), "Error cloning repo")
 	suite.Equal(repo.Clone(pathToClone), git.ErrRepositoryAlreadyExists, "Should throw ErrRepositoryAlreadyExists error")
-}
-
-type testCloner struct {
-	suite *GitRepositorySuite
-}
-
-func (t *testCloner) clone(storer *filesystem.Storage, tree billy.Filesystem, opts *git.CloneOptions) error {
-	t.suite.NotNil(opts.Auth)
-	return nil
 }
 
 func (suite *GitRepositorySuite) TestCloneSSHConfig() {
@@ -104,7 +108,7 @@ func (suite *GitRepositorySuite) TestCloneSSHConfig() {
 	repo := NewGitRepository(testRepoName, repoURL)
 	repo.Fs = appFs
 	repo.Protocol = "ssh"
-	repo.cloner = &testCloner{
+	repo.Cloner = &testCloner{
 		suite: suite,
 	}
 
@@ -124,7 +128,7 @@ func (suite *GitRepositorySuite) TestCloneSSHConfigWithPort() {
 	repo := NewGitRepository(testRepoName, repoURL.String())
 	repo.Fs = appFs
 	repo.Protocol = "ssh"
-	repo.cloner = &testCloner{
+	repo.Cloner = &testCloner{
 		suite: suite,
 	}
 

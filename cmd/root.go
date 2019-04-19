@@ -138,6 +138,9 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 	targetRepo := repo.NewGitRepository(selectedRepo.Name, "")
 	targetRepo.Fs = appFs
+	targetRepo.Cloner = &repo.GitCloner{
+		Fs: appFs,
+	}
 
 	switch remote.Protocol {
 	case "ssh":

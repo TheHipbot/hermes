@@ -35,6 +35,7 @@ func (m *MockDriver) EXPECT() *MockDriverMockRecorder {
 
 // AuthType mocks base method
 func (m *MockDriver) AuthType() string {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthType")
 	ret0, _ := ret[0].(string)
 	return ret0
@@ -42,21 +43,25 @@ func (m *MockDriver) AuthType() string {
 
 // AuthType indicates an expected call of AuthType
 func (mr *MockDriverMockRecorder) AuthType() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthType", reflect.TypeOf((*MockDriver)(nil).AuthType))
 }
 
 // Authenticate mocks base method
 func (m *MockDriver) Authenticate(arg0 remote.Auth) {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Authenticate", arg0)
 }
 
 // Authenticate indicates an expected call of Authenticate
 func (mr *MockDriverMockRecorder) Authenticate(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockDriver)(nil).Authenticate), arg0)
 }
 
 // GetRepos mocks base method
 func (m *MockDriver) GetRepos() ([]map[string]string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRepos")
 	ret0, _ := ret[0].([]map[string]string)
 	ret1, _ := ret[1].(error)
@@ -65,15 +70,18 @@ func (m *MockDriver) GetRepos() ([]map[string]string, error) {
 
 // GetRepos indicates an expected call of GetRepos
 func (mr *MockDriverMockRecorder) GetRepos() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepos", reflect.TypeOf((*MockDriver)(nil).GetRepos))
 }
 
 // SetHost mocks base method
 func (m *MockDriver) SetHost(arg0 string) {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetHost", arg0)
 }
 
 // SetHost indicates an expected call of SetHost
 func (mr *MockDriverMockRecorder) SetHost(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHost", reflect.TypeOf((*MockDriver)(nil).SetHost), arg0)
 }
