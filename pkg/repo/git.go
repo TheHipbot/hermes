@@ -21,9 +21,6 @@ var (
 
 func init() {
 	appFs = osfs.New("")
-	defaultCloner = &GitCloner{
-		Fs: appFs,
-	}
 }
 
 // GitRepository holds info for git repos and
@@ -38,11 +35,12 @@ type GitRepository struct {
 
 // NewGitRepository creates a GitRepository
 func NewGitRepository(name, url string) *GitRepository {
+	cloner, _ := NewCloner("git")
 	return &GitRepository{
 		Fs:     appFs,
 		Name:   name,
 		URL:    url,
-		Cloner: defaultCloner,
+		Cloner: cloner,
 	}
 }
 
