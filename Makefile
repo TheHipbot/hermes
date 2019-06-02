@@ -9,7 +9,7 @@ BIN_DIR=
 PKG_NAME := hermes
 PKG_PREFIX := "github.com/TheHipbot/${PKG_NAME}"
 
-GOOS := darwin
+GOOS := linux
 GOARCH := amd64
 
 # Build info
@@ -56,7 +56,7 @@ generate:
 
 .PHONY: test
 test: 
-	go test ./...
+	go test -tags gogit ./...
 
 cross-compile: all-archs
 

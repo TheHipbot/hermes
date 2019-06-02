@@ -32,7 +32,6 @@ import (
 	"github.com/spf13/viper"
 	billy "gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/osfs"
-	git "gopkg.in/src-d/go-git.v4"
 )
 
 var (
@@ -138,6 +137,8 @@ func getHandler(cmd *cobra.Command, args []string) {
 
 	targetRepo := repo.NewGitRepository(selectedRepo.Name, "")
 	targetRepo.Fs = appFs
+	cloner, _ := repo.NewCloner("git")
+	targetRepo.Cloner = cloner
 
 	switch remote.Protocol {
 	case "ssh":
@@ -162,7 +163,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if err := targetRepo.Clone(selectedRepo.Path); err != nil && err != git.ErrRepositoryAlreadyExists {
+	if err := targetRepo.Clone(selectedRepo.Path); err != nil && err != repo.ErrRepoAlreadyExists {
 		fmt.Printf("Error cloning repo %s\n%s\n", selectedRepo.Path, err)
 		os.Exit(1)
 	}

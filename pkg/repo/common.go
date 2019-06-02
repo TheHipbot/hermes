@@ -1,23 +1,55 @@
+//go:generate mockgen -package mock -destination ../../mock/mock_cloner.go github.com/TheHipbot/hermes/pkg/repo Cloner
+
 package repo
 
 import (
-	billy "gopkg.in/src-d/go-billy.v4"
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/storage/filesystem"
+	"errors"
+	"fmt"
+)
+
+var (
+	creators = map[string]func() (Cloner, error){}
+
+	// ErrRepoAlreadyExists is an error returned when the repo already exists
+	ErrRepoAlreadyExists = errors.New("Repository already exists")
+	// ErrCloneRepo when there is a normal error cloning repo
+	ErrCloneRepo = errors.New("Error cloning repo")
 )
 
 // Repository struct holds information for a repository
 type Repository interface {
-	Clone(path string) error
+	Clone(path string, opts *CloneOptions) error
 }
 
-type cloner interface {
-	clone(storer *filesystem.Storage, tree billy.Filesystem, opts *git.CloneOptions) error
+// AuthMethod is the method to authenticate
+// for cloners
+type AuthMethod interface {
+	Name() string
+	fmt.Stringer
 }
 
-type gitCloner struct{}
+// CloneOptions is for packaging various
+// options for cloning repositories
+type CloneOptions struct {
+	URL  string
+	Auth AuthMethod
+}
 
-func (gc *gitCloner) clone(storer *filesystem.Storage, tree billy.Filesystem, opts *git.CloneOptions) error {
-	_, err := git.Clone(storer, tree, opts)
-	return err
+// Cloner is an interface for cloning repositories
+type Cloner interface {
+	Clone(path string, opts *CloneOptions) error
+}
+
+// RegisterCloner takes a name for the cloner type and a function
+// which creates an instance of that cloner
+func RegisterCloner(name string, creator func() (Cloner, error)) {
+	creators[name] = creator
+}
+
+// NewCloner return a cloner from the given type and error
+func NewCloner(name string) (Cloner, error) {
+	if c, ok := creators[name]; ok {
+		return c()
+	}
+	return nil, errors.New("Ivalid Cloner Type")
 }

@@ -5,7 +5,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
-	github.com/golang/mock v1.1.1
+	github.com/golang/mock v1.2.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e
 	github.com/manifoldco/promptui v0.3.2
