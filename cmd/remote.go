@@ -40,6 +40,7 @@ var remoteCmd = &cobra.Command{
 	Use:   "remote",
 	Short: "Manage remotes for hermes repositories",
 	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
 		os.Exit(0)
 	},
 }
