@@ -15,6 +15,9 @@
     - [Root/Get Command](#root-get-command)
     - [Setup Command](#setup-command)
     - [Alias Command](#alias-command)
+    - [Version Command](#version-command)
+    - [Remote Commands](#remote-commands)
+        - [Remote Add Command](#remote-add-command)
 - [Contributing Guidlines](./CONTRIBUTING.md)
 
 ----
@@ -80,7 +83,7 @@ credentials_file: my_credentials.yml
 <a name="root-get-command"></a>
 ### Root / Get Command
 
-`hermes <args>` or `hermes get <args>`
+`hermes [REPO]` or `hermes get [REPO]`
 
 Running the hermes command without any subcommands or with the `get` subcommand are synonymous. The command is used to jump to a repo in the hermes cache or pull down a repo then jump to its new location.
 
@@ -105,4 +108,38 @@ Running hermes setup creates the `config_path` directory if specified in the .he
 
 `hermes alias`
 
-This command is meant only to provide the alias for a terminal session so it should be added to a shell profile, but not used otherwise. It writes to stdout a bash function which runs the hermes binary with the given args, then if a target file was written, it read the content as a directory to cd into. This is necessary because it is the only way which hermes can move the shell session's current working directory. 
+This command is meant only to provide the alias for a terminal session so it should be added to a shell profile, but not used otherwise. It writes to stdout a bash function which runs the hermes binary with the given args, then if a target file was written, it read the content as a directory to cd into. This is necessary because it is the only way which hermes can move the shell session's current working directory.
+
+### Version Command
+
+`hermes version`
+
+This command will output version information for the hermes binary you are executing.
+
+### Remote Commands
+
+This group of commands is for managing remote git servers which hermes should track against. Remotes that have been added will be queried for 
+
+#### Remote Add Command
+
+`hermes remote add [OPTIONS] [REMOTE URL]`
+
+This command is used to add new git remotes to your hermes cache to use for searching and managing repoistories. Once you run the command with a valid remote url, you will be prompted for which type of remote it is, your credentials to that remote, and which repository access protocol you would prefer.
+
+Currently supported types of remotes:
+
+- GitHub
+- Gitlab
+
+Currently supported protocols:
+
+- http(s)
+- ssh
+
+Calling `hermes remote add` on a remote that already exists in the cache will result in hermes collecting all current repositories from the remote. A new command will be added to `refresh` all remotes.
+
+##### Options
+
+**-a, --all**
+
+When adding a remote, this will index all repos available to the user (as opposed to starred or user owned repos which is the default depending on remote) if that option is available for the remote.
