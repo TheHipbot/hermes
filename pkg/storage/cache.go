@@ -31,9 +31,10 @@ type Storage interface {
 	Close() error
 	AddRepository(repo *Repository) error
 	RemoveRepository(name string) error
-	AddRemote(url, name, protocol string) error
+	AddRemote(url, name, remoteType, protocol string) error
 	SearchRepositories(needle string) []Repository
 	SearchRemote(remote string) (*Remote, bool)
+	ListRemotes() []*Remote
 }
 
 type storage struct {
@@ -139,7 +140,7 @@ func (s *storage) RemoveRepository(name string) error {
 }
 
 // AddRemote adds a remote to the cache
-func (s *storage) AddRemote(url, name, protocol string) error {
+func (s *storage) AddRemote(url, name, remoteType, protocol string) error {
 	if _, ok := s.Remotes[name]; ok {
 		return errors.New("Remote already exists")
 	}
@@ -148,6 +149,7 @@ func (s *storage) AddRemote(url, name, protocol string) error {
 		Name:     name,
 		URL:      url,
 		Protocol: protocol,
+		Type:     remoteType,
 		Repos:    map[string]*Repository{},
 	}
 
@@ -181,4 +183,13 @@ func (s *storage) SearchRemote(remote string) (*Remote, bool) {
 		return ptr, ok
 	}
 	return &Remote{}, ok
+}
+
+// ListRemotes will return a list of all the remotes in the cache
+func (s *storage) ListRemotes() []*Remote {
+	results := []*Remote{}
+	for _, r := range s.Remotes {
+		results = append(results, r)
+	}
+	return results
 }

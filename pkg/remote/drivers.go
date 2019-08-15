@@ -1,4 +1,5 @@
 //go:generate mockgen -package mock -destination ../../mock/mock_driver.go github.com/TheHipbot/hermes/pkg/remote Driver
+
 package remote
 
 import "errors"
