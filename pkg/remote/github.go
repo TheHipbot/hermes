@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -51,7 +50,7 @@ func (gh *GitHub) AuthType() string {
 func (gh *GitHub) GetRepos() ([]map[string]string, error) {
 	urlFormat := fmt.Sprintf("%s%s", gh.Host, gitHubUserRequestFmt)
 	if gh.Auth.Token == "" && gh.Auth.Username == "" {
-		return nil, errors.New("Auth is empty")
+		return nil, ErrAuth
 	}
 
 	page := 1

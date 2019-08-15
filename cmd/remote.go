@@ -53,6 +53,29 @@ var remoteAddCmd = &cobra.Command{
 	Run:   remoteAddHandler,
 }
 
+func promptAndGetAuth(remoteURL *url.URL, driver remote.Driver) (remote.Auth, error) {
+	remoteName := remoteURL.Hostname()
+	auth := remote.Auth{}
+	switch driver.AuthType() {
+	case "token":
+		if cred, err := credentialsStorer.Get(remoteName); err != nil {
+			ip := prompt.CreateTokenInputPrompt(prompter)
+			// TODO: handle error here
+			// TODO: reprompt on failed auth
+			token, _ := ip.Run()
+			credentialsStorer.Put(remoteName, credentials.Credential{
+				Type:  "token",
+				Token: token,
+			})
+			auth.Token = token
+		} else {
+			auth.Token = cred.Token
+		}
+	default:
+	}
+	return auth, nil
+}
+
 func remoteAddHandler(cmd *cobra.Command, args []string) {
 	defer credentialsStorer.Close()
 
@@ -74,27 +97,18 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 		AllRepos: getAllRepos,
 	})
 	driver.SetHost(remoteURL.String())
-	auth := remote.Auth{}
-	switch driver.AuthType() {
-	case "token":
-		if cred, err := credentialsStorer.Get(remoteName); err != nil {
-			ip := prompt.CreateTokenInputPrompt(prompter)
-			// TODO: handle error here
-			// TODO: reprompt on failed auth
-			token, _ := ip.Run()
-			credentialsStorer.Put(remoteName, credentials.Credential{
-				Type:  "token",
-				Token: token,
-			})
-			auth.Token = token
-		} else {
-			auth.Token = cred.Token
-		}
-	default:
-	}
 
+	auth, _ := promptAndGetAuth(remoteURL, driver)
 	driver.Authenticate(auth)
 	repos, err := driver.GetRepos()
+	for err == remote.ErrAuth {
+		fmt.Println("Authentication error received from remote")
+		credentialsStorer.Delete(remoteName)
+		auth, _ = promptAndGetAuth(remoteURL, driver)
+		driver.Authenticate(auth)
+		repos, err = driver.GetRepos()
+	}
+
 	if err != nil {
 		fmt.Println("Error retrieving repos")
 		os.Exit(1)

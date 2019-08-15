@@ -224,6 +224,230 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 	remoteAddHandler(mockCmd, []string{"https://github.com"})
 }
 
+func (suite *RemoteCmdSuite) TestAuthError() {
+	ctrl := gomock.NewController(suite.T())
+	mockPrompter := mock.NewMockFactory(ctrl)
+	prompter = mockPrompter
+	mockSelectPrompt := mock.NewMockSelectPrompt(ctrl)
+	mockInputPrompt := mock.NewMockInputPrompt(ctrl)
+	mockStore := mock.NewMockStorage(ctrl)
+	suite.mockCredentialStorer = mock.NewMockCredentialsStorer(ctrl)
+	credentialsStorer = suite.mockCredentialStorer
+	defer ctrl.Finish()
+
+	store = mockStore
+	repos := []map[string]string{
+		{
+			"name": "github.com/thehipbot/hermes",
+			"url":  "https://github.com/thehipbot/hermes",
+		},
+		{
+			"name": "github.com/thehipbot/dotfiles",
+			"url":  "https://github.com/thehipbot/dotfiles",
+		},
+		{
+			"name": "github.com/carsdotcom/bitcar",
+			"url":  "https://github.com/carsdotcom/bitcar",
+		},
+	}
+
+	suite.mockDriver.
+		EXPECT().
+		AuthType().
+		Return("token").
+		Times(2)
+
+	gomock.InOrder(
+		// create prompt for drivers
+		mockPrompter.
+			EXPECT().
+			CreateSelectPrompt(gomock.Any(), gomock.Eq(drivers), gomock.Any()).
+			Return(mockSelectPrompt).
+			Times(1),
+
+		// run driver prompt
+		mockSelectPrompt.
+			EXPECT().
+			Run().
+			Return(2, "test", nil).
+			Times(1),
+
+		suite.mockDriver.
+			EXPECT().
+			SetHost(gomock.Eq("https://github.com")).
+			Return().
+			Times(1),
+	)
+
+	gomock.InOrder(
+		// prompt for token
+		mockPrompter.
+			EXPECT().
+			CreateInputPrompt(gomock.Any()).
+			Return(mockInputPrompt).
+			Times(1),
+
+		// run token prompt
+		mockInputPrompt.
+			EXPECT().
+			Run().
+			Return("1234abcd", nil).
+			Times(1),
+
+		// store auth from input
+		suite.mockCredentialStorer.
+			EXPECT().
+			Put("github.com", credentials.Credential{
+				Type:  "token",
+				Token: "1234abcd",
+			}).
+			Return(nil).
+			Times(1),
+
+		suite.mockDriver.
+			EXPECT().
+			Authenticate(gomock.Eq(remote.Auth{
+				Token: "1234abcd",
+			})).
+			Times(1),
+	)
+
+	// Open store, add remote, add repos, save, close
+	gomock.InOrder(
+		mockStore.
+			EXPECT().
+			Open().
+			Return().
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			AddRemote("https://github.com", "github.com", "https").
+			Return(nil).
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/hermes",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/hermes"),
+			}).
+			Return(nil).
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			AddRepository(&storage.Repository{
+				Name: "github.com/thehipbot/dotfiles",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/thehipbot/dotfiles"),
+			}).
+			Return(nil).
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			AddRepository(&storage.Repository{
+				Name: "github.com/carsdotcom/bitcar",
+				Path: fmt.Sprintf("%s%s", testRepoPath, "github.com/carsdotcom/bitcar"),
+			}).
+			Return(nil).
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			Save().
+			Return(nil).
+			Times(1),
+
+		mockStore.
+			EXPECT().
+			Close().
+			Return(nil).
+			Times(1),
+	)
+
+	suite.mockCredentialStorer.
+		EXPECT().
+		Get("github.com").
+		Return(credentials.Credential{}, credentials.ErrCredentialNotFound).
+		Times(2)
+
+	suite.mockCredentialStorer.
+		EXPECT().
+		Close().
+		Return(nil).
+		Times(1)
+
+	// return auth error from GetRepos
+	suite.mockDriver.
+		EXPECT().
+		GetRepos().
+		Return(nil, remote.ErrAuth).
+		Times(1)
+
+	gomock.InOrder(
+		// delete credential from storer
+		suite.mockCredentialStorer.
+			EXPECT().
+			Delete("github.com").
+			Return(nil).
+			Times(1),
+
+		// prompt for token
+		mockPrompter.
+			EXPECT().
+			CreateInputPrompt(gomock.Any()).
+			Return(mockInputPrompt).
+			Times(1),
+
+		// run token prompt
+		mockInputPrompt.
+			EXPECT().
+			Run().
+			Return("1234abcd", nil).
+			Times(1),
+
+		// store auth from input
+		suite.mockCredentialStorer.
+			EXPECT().
+			Put("github.com", credentials.Credential{
+				Type:  "token",
+				Token: "1234abcd",
+			}).
+			Return(nil).
+			Times(1),
+
+		suite.mockDriver.
+			EXPECT().
+			Authenticate(gomock.Eq(remote.Auth{
+				Token: "1234abcd",
+			})).
+			Times(1),
+	)
+
+	suite.mockDriver.
+		EXPECT().
+		GetRepos().
+		Return(repos, nil).
+		Times(1)
+
+	gomock.InOrder(
+		mockPrompter.
+			EXPECT().
+			CreateSelectPrompt(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(mockSelectPrompt).
+			Times(1),
+
+		mockSelectPrompt.
+			EXPECT().
+			Run().
+			Return(0, "https", nil).
+			Times(1),
+	)
+
+	remoteAddHandler(mockCmd, []string{"https://github.com"})
+}
+
 func (suite *RemoteCmdSuite) TestWithStoredTokenAuth() {
 	ctrl := gomock.NewController(suite.T())
 	mockPrompter := mock.NewMockFactory(ctrl)

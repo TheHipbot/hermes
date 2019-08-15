@@ -31,7 +31,45 @@ func (suite *FSStorageSuite) TestNewFSStorer() {
 	suite.Equal(file, storage.storer)
 }
 
-func (suite *FSStorageSuite) TestPutAndGet() {
+func (suite *FSStorageSuite) TestPutGetDelete() {
+	file, err := testFS.Create("test_credentials.yml")
+	suite.Nil(err, "Should create test file in memory fs")
+
+	storage := NewFSStorer(file)
+	suite.NotNil(storage)
+	suite.Equal(file, storage.storer)
+
+	testCred := credentials.Credential{
+		Type:  "token",
+		Token: "123abc",
+	}
+	storage.Put("test.com", testCred)
+
+	cred, err := storage.Get("test.com")
+	suite.Nil(err, "Error should be nil")
+	suite.Equal(testCred, cred, "Test credential should be retrieved")
+
+	storage2 := NewFSStorer(file)
+	suite.NotNil(storage)
+	suite.Equal(file, storage.storer)
+
+	cred, err = storage2.Get("test.com")
+	suite.Nil(err, "Error should be nil")
+	suite.Equal(testCred, cred, "Test credential should be retrieved from the same file")
+
+	storage2.Delete("test.com")
+	cred, err = storage2.Get("test.com")
+	suite.Nil(err, credentials.ErrCredentialNotFound)
+
+	storage = NewFSStorer(file)
+	suite.NotNil(storage)
+	suite.Equal(file, storage.storer)
+
+	cred, err = storage.Get("test.com")
+	suite.Nil(err, credentials.ErrCredentialNotFound)
+}
+
+func (suite *FSStorageSuite) TestDelete() {
 	file, err := testFS.Create("test_credentials.yml")
 	suite.Nil(err, "Should create test file in memory fs")
 
@@ -48,7 +86,6 @@ func (suite *FSStorageSuite) TestPutAndGet() {
 	storage2 := NewFSStorer(file)
 	suite.NotNil(storage)
 	suite.Equal(file, storage.storer)
-
 	cred, err := storage2.Get("test.com")
 	suite.Nil(err, "Error should be nil")
 	suite.Equal(testCred, cred, "Test credential should be retrieved from the same file")
