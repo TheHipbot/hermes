@@ -84,7 +84,7 @@ func CreateTokenInputPrompt(f Factory) InputPrompt {
 	return f.CreateInputPrompt(inputKeyLabel)
 }
 
-// CreateProtoclSelectPrompt returns prompt for driver
-func CreateProtoclSelectPrompt(f Factory, protocols []string) SelectPrompt {
+// CreateProtocolSelectPrompt returns prompt for driver
+func CreateProtocolSelectPrompt(f Factory, protocols []string) SelectPrompt {
 	return f.CreateSelectPrompt(selectProtocolLabel, protocols, selectProtocolTemplates)
 }
