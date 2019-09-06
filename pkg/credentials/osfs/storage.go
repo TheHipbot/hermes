@@ -101,6 +101,11 @@ func (s *Storage) Put(key string, cred credentials.Credential) error {
 	return nil
 }
 
+// Delete removes the stored credential with the given key
+func (s *Storage) Delete(key string) error {
+	return nil
+}
+
 // Close will close file used to store credentials
 func (s *Storage) Close() error {
 	return s.storer.Close()

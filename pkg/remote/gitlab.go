@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -45,7 +44,7 @@ func (gl *Gitlab) AuthType() string {
 func (gl *Gitlab) GetRepos() ([]map[string]string, error) {
 	urlFormat := fmt.Sprintf("%s%s", gl.Host, gitlabUserRequestFmt)
 	if gl.Auth.Token == "" && gl.Auth.Username == "" {
-		return nil, errors.New("Auth is empty")
+		return nil, ErrAuth
 	}
 
 	page := 1

@@ -25,6 +25,7 @@ type Credential struct {
 type Storer interface {
 	Get(key string) (Credential, error)
 	Put(key string, cred Credential) error
+	Delete(key string) error
 	Close() error
 }
 
@@ -44,11 +45,11 @@ type storage struct {
 // returns an error if unable to do so
 func (s *storage) Get(key string) (Credential, error) {
 	if s.credentials != nil {
-		if cred, ok := s.credentials[key]; !ok {
+		cred, ok := s.credentials[key]
+		if !ok {
 			return Credential{}, ErrCredentialNotFound
-		} else {
-			return cred, nil
 		}
+		return cred, nil
 	}
 
 	return Credential{}, ErrCredentialStorerError
@@ -63,6 +64,10 @@ func (s *storage) Put(key string, cred Credential) error {
 	}
 
 	return ErrCredentialStorerError
+}
+
+func (s *storage) Delete(key string) error {
+	return nil
 }
 
 // Close for the in memory is no-op
