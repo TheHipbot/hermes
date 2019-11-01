@@ -4,7 +4,6 @@ package repo
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -24,10 +23,10 @@ type CallThroughCloner struct{}
 
 // Clone clones a repository
 func (c *CallThroughCloner) Clone(path string, opts *CloneOptions) error {
-	cmd := exec.Command("git", "clone", opts.URL, path)
+	cmd := exec.Command("git", "clone", "--progress", opts.URL, path)
 	cmd.Stdout = os.Stdout
 	var errBuffer bytes.Buffer
-	cmd.Stderr = io.MultiWriter(&errBuffer, os.Stderr)
+	cmd.Stderr = &errBuffer
 
 	if err := cmd.Run(); err != nil {
 		raw, err := ioutil.ReadAll(&errBuffer)

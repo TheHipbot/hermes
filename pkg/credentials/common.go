@@ -1,4 +1,5 @@
 //go:generate mockgen -package mock -destination ../../mock/mock_credentials.go -mock_names Storer=MockCredentialsStorer github.com/TheHipbot/hermes/pkg/credentials Storer
+
 package credentials
 
 import "errors"
@@ -6,11 +7,11 @@ import "errors"
 var (
 	// ErrCredentialNotFound is an error that will be returned when
 	// the requested credential was not found in the Storer
-	ErrCredentialNotFound = errors.New("Credential not found")
+	ErrCredentialNotFound = errors.New("credential not found")
 
 	// ErrCredentialStorerError is an error returned when the credential
 	// storer throws an error
-	ErrCredentialStorerError = errors.New("Credential storer error")
+	ErrCredentialStorerError = errors.New("credential storer error")
 )
 
 // Credential stores a credential and its type

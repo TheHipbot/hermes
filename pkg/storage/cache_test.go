@@ -347,6 +347,25 @@ func (s *StorageSuite) TestStorageSearchRemoteWithoutResult() {
 	s.Equal(&Remote{}, res)
 }
 
+func (s *StorageSuite) TestListRemotes() {
+	remotes := testStorage.ListRemotes()
+
+	s.Len(remotes, 2, "There should be 2 remotes")
+	for _, r := range remotes {
+		s.Contains([]string{"github.com", "gitlab.com"}, r.Name, "It should be one of the two remotes in test cache")
+	}
+}
+
+func (s *StorageSuite) TestListRemotesAfterAdd() {
+	remotes := testStorage.ListRemotes()
+	s.Len(remotes, 2, "There should be 2 remotes")
+
+	err := testStorage.AddRemote("test.com", "test", "test", "https")
+	s.Nil(err, "Add remote should not error")
+	remotes = testStorage.ListRemotes()
+	s.Len(remotes, 3, "There should be 3 remotes after adding one")
+}
+
 func TestStorageSuite(t *testing.T) {
 	suite.Run(t, new(StorageSuite))
 }
