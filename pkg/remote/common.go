@@ -11,19 +11,19 @@ import (
 var (
 	// ErrAuth is an error returned when an authentication error status
 	// code is returned from server
-	ErrAuth = errors.New("Bad authentication provided")
+	ErrAuth = errors.New("bad authentication provided")
 
 	// ErrEndOfRepos is an error returned when there is no next Link header
 	// indicating that there are no additional pages of repos
-	ErrEndOfRepos = errors.New("No next link found, no more repos available")
+	ErrEndOfRepos = errors.New("no next link found, no more repos available")
 
 	// ErrParsingResponse is returned when a response is received from the remote
 	// but that response could not be parsed
-	ErrParsingResponse = errors.New("Response from remote could not be parsed")
+	ErrParsingResponse = errors.New("response from remote could not be parsed")
 
 	// ErrRemoteRequest returned when there is an error with creating or making
 	// the request to the remote
-	ErrRemoteRequest = errors.New("Bad request to remote")
+	ErrRemoteRequest = errors.New("bad request to remote")
 )
 
 func getRepoHelper(url string, acc []map[string]string, mapper func(map[string]interface{}) map[string]string) ([]map[string]string, error) {

@@ -104,7 +104,7 @@ func (s *storage) AddRepository(repo *Repository) error {
 
 	if r, ok := s.Remotes[remote]; ok {
 		if _, ok := r.Repos[repo.Name]; ok {
-			return errors.New("Repo already exists")
+			return errors.New("repo already exists")
 		}
 		r.Repos[repo.Name] = repo
 	} else {
@@ -136,13 +136,13 @@ func (s *storage) RemoveRepository(name string) error {
 		}
 	}
 
-	return errors.New("Repo not found")
+	return errors.New("repo not found")
 }
 
 // AddRemote adds a remote to the cache
 func (s *storage) AddRemote(url, name, remoteType, protocol string) error {
 	if _, ok := s.Remotes[name]; ok {
-		return errors.New("Remote already exists")
+		return errors.New("remote already exists")
 	}
 
 	remote := &Remote{
