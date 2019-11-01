@@ -18,8 +18,8 @@ var (
 Git Commit: {{ .GitCommit }}
 Built:      {{ .BuildTime }}`
 
-	errParseTemplate   = errors.New("Error parsing version template")
-	errExecuteTemplate = errors.New("Error executing version template")
+	errParseTemplate   = errors.New("error parsing version template")
+	errExecuteTemplate = errors.New("error executing version template")
 )
 
 // VersionData contains data on the version

@@ -11,9 +11,9 @@ var (
 	creators = map[string]func() (Cloner, error){}
 
 	// ErrRepoAlreadyExists is an error returned when the repo already exists
-	ErrRepoAlreadyExists = errors.New("Repository already exists")
+	ErrRepoAlreadyExists = errors.New("repository already exists")
 	// ErrCloneRepo when there is a normal error cloning repo
-	ErrCloneRepo = errors.New("Error cloning repo")
+	ErrCloneRepo = errors.New("error cloning repo")
 )
 
 // Repository struct holds information for a repository

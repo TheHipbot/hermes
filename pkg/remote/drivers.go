@@ -33,9 +33,9 @@ var (
 	authToken = "token"
 
 	// ErrNotImplemented error when driver requested is not implemented
-	ErrNotImplemented = errors.New("Driver not implemented")
+	ErrNotImplemented = errors.New("driver not implemented")
 	// ErrInvalidOpts error when options for driver are invald
-	ErrInvalidOpts = errors.New("Invalid driver options")
+	ErrInvalidOpts = errors.New("invalid driver options")
 )
 
 func init() {

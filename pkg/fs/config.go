@@ -26,7 +26,7 @@ func NewConfigFS() *ConfigFS {
 func (c *ConfigFS) checkForConfigDir() error {
 	stat, err := c.FS.Stat(viper.GetString("config_path"))
 	if err != nil || !stat.IsDir() {
-		return errors.New("Config directory doesn't exist or can't be opened, please run hermes setup")
+		return errors.New("config directory doesn't exist or can't be opened, please run hermes setup")
 	}
 	return nil
 }

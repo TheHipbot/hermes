@@ -56,11 +56,11 @@ func (gr *GitRepository) Clone(path string) error {
 		var hostname string
 		r, err := regexp.Compile(`.+@([a-zA-z.\-0-9]+)[:/].+`)
 		if err != nil {
-			return errors.New("Regular expression should compile")
+			return errors.New("regular expression should compile")
 		}
 		cps := r.FindStringSubmatch(gr.URL)
 		if len(cps) < 2 {
-			return errors.New("Could not find hostname in URL")
+			return errors.New("could not find hostname in URL")
 		}
 		hostname = cps[1]
 		a, err := getSSHAuth(hostname)
@@ -91,7 +91,7 @@ func getSSHAuth(host string) (transport.AuthMethod, error) {
 		}
 	}
 
-	return nil, errors.New("No ssh key found")
+	return nil, errors.New("no ssh key found")
 }
 
 func pathIfExists(path string) (string, error) {
