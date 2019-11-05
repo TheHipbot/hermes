@@ -465,6 +465,12 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 
 	mockStore.
 		EXPECT().
+		Open().
+		Return().
+		Times(1)
+
+	mockStore.
+		EXPECT().
 		SearchRemote("github.com").
 		Return(nil, false).
 		Times(1)
@@ -492,12 +498,6 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 			EXPECT().
 			GetRepos().
 			Return(repos, nil).
-			Times(1),
-
-		mockStore.
-			EXPECT().
-			Open().
-			Return().
 			Times(1),
 
 		mockStore.
@@ -544,7 +544,7 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 
 	saveAndCloseStorage(mockStore)
 
-	getAllRepos = true
+	getAllReposFlg = true
 	remoteAddHandler(mockCmd, []string{"https://github.com"})
 	suite.True(optsHarness.AllRepos)
 }
@@ -697,6 +697,12 @@ func (suite *RemoteCmdSuite) TestRemoteRefresh() {
 
 	mockStore.
 		EXPECT().
+		Open().
+		Return().
+		Times(1)
+
+	mockStore.
+		EXPECT().
 		ListRemotes().
 		Return([]*storage.Remote{
 			&storage.Remote{
@@ -712,12 +718,6 @@ func (suite *RemoteCmdSuite) TestRemoteRefresh() {
 				Type:     "test",
 			},
 		}).
-		Times(1)
-
-	mockStore.
-		EXPECT().
-		Open().
-		Return().
 		Times(1)
 
 	mockStore.

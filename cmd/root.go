@@ -202,10 +202,11 @@ func init() {
 	viper.SetDefault("credentials_type", "none")
 	viper.SetDefault("credentials_file", "credentials.yml")
 
-	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(aliasCmd)
 	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(remoteCmd)
+	rootCmd.AddCommand(repoCmd)
+	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
