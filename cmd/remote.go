@@ -30,10 +30,10 @@ var (
 	}
 
 	// flag vars
-	getAllRepos bool
-	protocol    = ""
-	remoteType  = ""
-	token       = ""
+	getAllReposFlg bool
+	protocolFlg    = ""
+	remoteTypeFlg  = ""
+	tokenFlg       = ""
 
 	errInput           = errors.New("error retrieving input")
 	errInvalidProtocol = fmt.Errorf("invalid protocol, valid values are %s ", protocols)
@@ -44,10 +44,10 @@ var (
 func init() {
 	remoteCmd.AddCommand(remoteAddCmd)
 	remoteCmd.AddCommand(remoteRefreshCmd)
-	remoteCmd.Flags().BoolVarP(&getAllRepos, "all", "a", false, "get all repos")
-	remoteCmd.Flags().StringVarP(&protocol, "protocol", "p", "", "protocol to use for repos of given remote")
-	remoteCmd.Flags().StringVarP(&remoteType, "type", "t", "", "remote type (e.g. github, gitlab, etc.)")
-	remoteCmd.Flags().StringVar(&token, "token", "", "auth token")
+	remoteCmd.Flags().BoolVarP(&getAllReposFlg, "all", "a", false, "get all repos")
+	remoteCmd.Flags().StringVarP(&protocolFlg, "protocol", "p", "", "protocol to use for repos of given remote(s)")
+	remoteAddCmd.Flags().StringVarP(&remoteTypeFlg, "type", "t", "", "remote type (e.g. github, gitlab, etc.)")
+	remoteAddCmd.Flags().StringVar(&tokenFlg, "token", "", "auth token")
 }
 
 // remoteCmd represents the base remote command when called without any subcommands
@@ -73,7 +73,13 @@ func promptAndGetAuth(remoteURL *url.URL, driver remote.Driver) (remote.Auth, er
 	auth := remote.Auth{}
 	switch driver.AuthType() {
 	case "token":
-		if cred, err := credentialsStorer.Get(remoteName); err != nil {
+		if tokenFlg != "" {
+			credentialsStorer.Put(remoteName, credentials.Credential{
+				Type:  "token",
+				Token: tokenFlg,
+			})
+			auth.Token = tokenFlg
+		} else if cred, err := credentialsStorer.Get(remoteName); err != nil {
 			fmt.Println(err)
 			ip := prompt.CreateTokenInputPrompt(prompter)
 			// TODO: handle error here
@@ -98,9 +104,9 @@ func promptAndGetAuth(remoteURL *url.URL, driver remote.Driver) (remote.Auth, er
 func getProtocolIndex() (int, error) {
 	protocolIndex := -1
 	var err error
-	if protocol != "" {
+	if protocolFlg != "" {
 		for i, p := range protocols {
-			if p == protocol {
+			if p == protocolFlg {
 				protocolIndex = i
 				break
 			}
@@ -122,6 +128,9 @@ func getProtocolIndex() (int, error) {
 }
 
 func remoteAddHandler(cmd *cobra.Command, args []string) {
+	store.Open()
+	defer store.Close()
+	defer store.Save()
 	defer credentialsStorer.Close()
 	if err := addReposFromRemote(args[0]); err != nil {
 		fmt.Println(err)
@@ -130,7 +139,6 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 }
 
 func addReposFromRemote(remoteStr string) error {
-
 	remoteURL, err := url.Parse(remoteStr)
 	remoteName := remoteURL.Hostname()
 	if err != nil {
@@ -139,19 +147,27 @@ func addReposFromRemote(remoteStr string) error {
 	cachedRemote, remoteCached := store.SearchRemote(remoteName)
 
 	var remoteType string
-	if remoteCached {
-		remoteType = cachedRemote.Type
+	if remoteTypeFlg != "" {
+		remoteType = remoteTypeFlg
 	} else {
-		p := prompt.CreateDriverSelectPrompt(prompter, drivers)
-		i, _, err := p.Run()
-		if err != nil {
-			return errInput
+		if remoteCached {
+			remoteType = cachedRemote.Type
+		} else {
+			p := prompt.CreateDriverSelectPrompt(prompter, drivers)
+			i, _, err := p.Run()
+			if err != nil {
+				return errInput
+			}
+			remoteType = drivers[i].Name
 		}
-		remoteType = drivers[i].Name
 	}
-	driver, _ := remote.NewDriver(remoteType, &remote.DriverOpts{
-		AllRepos: getAllRepos,
+	driver, err := remote.NewDriver(remoteType, &remote.DriverOpts{
+		AllRepos: getAllReposFlg,
 	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	driver.SetHost(remoteURL.String())
 
 	auth, err := promptAndGetAuth(remoteURL, driver)
@@ -180,11 +196,13 @@ func addReposFromRemote(remoteStr string) error {
 			return err
 		}
 
-		store.Open()
-		defer store.Close()
-		defer store.Save()
-
 		store.AddRemote(remoteURL.String(), remoteName, remoteType, protocols[protocolIndex])
+	} else if protocolFlg != "" {
+		protocolIndex, err := getProtocolIndex()
+		if err != nil {
+			return err
+		}
+		cachedRemote.Protocol = protocols[protocolIndex]
 	}
 
 	// add repos to cache

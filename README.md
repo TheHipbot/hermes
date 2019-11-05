@@ -13,11 +13,14 @@
     - [Example File](#example-config)
 - [Usage](#usage)
     - [Root/Get Command](#root-get-command)
-    - [Setup Command](#setup-command)
     - [Alias Command](#alias-command)
-    - [Version Command](#version-command)
+    - [Repository Commands](#repository-commands)
+        - [Repository Rm Command](#repository-rm-command)
     - [Remote Commands](#remote-commands)
         - [Remote Add Command](#remote-add-command)
+        - [Remote Refresh Command](#remote-refresh-command)
+    - [Setup Command](#setup-command)
+    - [Version Command](#version-command)
 - [Contributing Guidlines](./CONTRIBUTING.md)
 
 ----
@@ -98,33 +101,33 @@ When run, the following actions happen in order:
     * If there are multiple results, the user is prompted to select a repo from the results. Once a repo is selected, hermes will continue with that repo.
 3. Assuming the command has executed successfully a target path should be written to the target file. Hermes will exit 0 and the alias (assuming it has been setup) will read the path from the file, move the current working directory to that target directory, remove the target file and exit.
 
-### Setup Command
-
-`hermes setup`
-
-Running hermes setup creates the `config_path` directory if specified in the .hermes.yml file or `$HOME/.hermes` by default. This ensures the directory is available for subsequent commands and should only be run once.
-
 ### Alias Command
 
 `hermes alias`
 
 This command is meant only to provide the alias for a terminal session so it should be added to a shell profile, but not used otherwise. It writes to stdout a bash function which runs the hermes binary with the given args, then if a target file was written, it read the content as a directory to cd into. This is necessary because it is the only way which hermes can move the shell session's current working directory.
 
-### Version Command
-
-`hermes version`
-
-This command will output version information for the hermes binary you are executing.
-
 ### Remote Commands
 
-This group of commands is for managing remote git servers which hermes should track against. Remotes that have been added will be queried for 
+`hermes remote [SUBCOMMAND] [FLAGS] [ARGS]`
+
+This group of commands are used for managing remote git servers which hermes should track against. Remotes that have been added will be queried for repoistories to which the user has access. This repositories will be added to the cache file along with information on the remote itself.
+
+#### Flags (Global to all remote commands)
+
+**-a, --all**
+
+When adding or refreshing a remote, this will index all repos available to the user (as opposed to starred or user owned repos which is the default depending on remote) if that option is available for the remote.
+
+**-p, --protocol**
+
+When adding a remote, you can add the protocol flag followed by a valid protocol (`http`, `https`, or `ssh`) inline with the remote command. If no protocol is present, the user will be prompted for a protocol. 
 
 #### Remote Add Command
 
-`hermes remote add [OPTIONS] [REMOTE URL]`
+`hermes remote add [FLAGS] [REMOTE URL]`
 
-This command is used to add new git remotes to your hermes cache to use for searching and managing repoistories. Once you run the command with a valid remote url, you will be prompted for which type of remote it is, your credentials to that remote, and which repository access protocol you would prefer.
+This command is used to add new git remotes to your hermes cache to use for searching and managing repositories. Once you run the command with a valid remote url, you will be prompted for which type of remote it is, your credentials to that remote, and which repository access protocol you would prefer. Adding a remote that already exists will act as a refresh to the remote, in this case any new values provided for protocol will be update in the cache and 
 
 Currently supported types of remotes:
 
@@ -136,10 +139,52 @@ Currently supported protocols:
 - http(s)
 - ssh
 
-Calling `hermes remote add` on a remote that already exists in the cache will result in hermes collecting all current repositories from the remote. A new command will be added to `refresh` all remotes.
+##### Flags
 
-##### Options
+**--token**
 
-**-a, --all**
+When adding a remote, you can add the token flag to provide an auth token inline to the command, which will then replace any existing entry for the token in the credentials storer. If authentication is not successful, user will be prompted for a new token.
 
-When adding a remote, this will index all repos available to the user (as opposed to starred or user owned repos which is the default depending on remote) if that option is available for the remote.
+**-t, --type**
+
+When adding a remote, you can specify the type of remote inline to the command, valid options are `github` and `gitlab`.
+
+#### Remote Refresh Command
+
+`hermes remote refresh [FLAGS]`
+
+The refresh command will attempt to "refresh" all currently tracked remotes by re-adding all repos of the remote. This will not affect existing repositories, but will add any new ones that have been created on the remote since the remote was first added or last refreshed. 
+
+### Repository Commands
+
+`hermes repo [SUBCOMMAND] [FLAGS] [ARGS]`
+
+aliases: `repository`
+
+This group of commands are used to manage repositories which hermes should track. Repositories will typically be added wholesale by remote, but can be added (soon) and removed individually from the cache and optionally from disk.
+
+#### Repository Remove Command
+
+`hermes repo rm [FLAGS] [REPOSITORY NAME]`
+
+aliases: `remove`
+
+The remove command will remove repositories from the hermes cache and optionally from the filesystem as well. Removing from the cache will keep the repository folder in the `repo_dir` but will remove it from the list of repos in the cache. If the repository still exists in the remote, refreshing the remote will add it back. 
+
+##### Flags
+
+**--hard**
+
+When removing a repository from the repository, adding the hard remove flag will also delete the directory for the repo that was cloned into the `repo_dir` if it exists. It will also recursively remove any empty parent directories up to the `repo_dir`.
+
+### Setup Command
+
+`hermes setup`
+
+Running hermes setup creates the `config_path` directory if specified in the .hermes.yml file or `$HOME/.hermes` by default. This ensures the directory is available for subsequent commands and should only be run once.
+
+### Version Command
+
+`hermes version`
+
+This command will output version information for the hermes binary you are executing.
