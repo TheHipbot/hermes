@@ -134,6 +134,9 @@ func remoteAddHandler(cmd *cobra.Command, args []string) {
 	defer credentialsStorer.Close()
 	if err := addReposFromRemote(args[0]); err != nil {
 		fmt.Println(err)
+		store.Save()
+		store.Close()
+		credentialsStorer.Close()
 		os.Exit(1)
 	}
 }
@@ -165,8 +168,7 @@ func addReposFromRemote(remoteStr string) error {
 		AllRepos: getAllReposFlg,
 	})
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	driver.SetHost(remoteURL.String())
 
@@ -240,6 +242,9 @@ func remoteRefreshHandler(cmd *cobra.Command, args []string) {
 		}
 	}
 	if aggErr != nil {
+		store.Save()
+		store.Close()
+		credentialsStorer.Close()
 		os.Exit(1)
 	}
 }
