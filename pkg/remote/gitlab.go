@@ -1,8 +1,9 @@
 package remote
 
 import (
-	"fmt"
 	"strings"
+
+	gitlab "github.com/xanzy/go-gitlab"
 )
 
 var (
@@ -12,50 +13,88 @@ var (
 )
 
 func gitlabCreator(opts *DriverOpts) (Driver, error) {
-	return &Gitlab{
-		Host: defaultGitlabAPIHost,
-		Opts: opts,
-	}, nil
+	newDriver := &GitLab{}
+	if opts.Auth == nil {
+		return newDriver, ErrAuth
+	}
+	switch opts.Auth.Type {
+	case "token":
+		client := gitlab.NewOAuthClient(nil, opts.Auth.Token)
+		newDriver.client = client
+	}
+	if opts.Host != "" {
+		newDriver.client.SetBaseURL(opts.Host)
+	}
+	newDriver.Host = defaultGitlabAPIHost
+	newDriver.Opts = opts
+	return newDriver, nil
 }
 
-// Gitlab is a client to gitlab
-type Gitlab struct {
+// GitLab is a client to gitlab
+type GitLab struct {
 	Auth
-	Host string
-	Opts *DriverOpts
+	Host   string
+	Opts   *DriverOpts
+	client *gitlab.Client
 }
 
 // SetHost sets github driver host to provided string
-func (gl *Gitlab) SetHost(host string) {
+func (gl *GitLab) SetHost(host string) {
 	gl.Host = host
+	gl.client.SetBaseURL(host)
 }
 
 // Authenticate sets Auth object for driver
-func (gl *Gitlab) Authenticate(a Auth) {
+func (gl *GitLab) Authenticate(a Auth) {
 	gl.Auth = a
 }
 
 // AuthType sets Auth object for driver
-func (gl *Gitlab) AuthType() string {
+func (gl *GitLab) AuthType() string {
 	return authToken
 }
 
 // GetRepos gets the repos for the github user
-func (gl *Gitlab) GetRepos() ([]map[string]string, error) {
-	urlFormat := fmt.Sprintf("%s%s", gl.Host, gitlabUserRequestFmt)
+func (gl *GitLab) GetRepos() ([]map[string]string, error) {
+	allRepos := []map[string]string{}
+	membership := !gl.Opts.AllRepos
+	opts := &gitlab.ListProjectsOptions{
+		Membership: &membership,
+		ListOptions: gitlab.ListOptions{
+			PerPage: 40,
+		},
+	}
+
 	if gl.Auth.Token == "" && gl.Auth.Username == "" {
 		return nil, ErrAuth
 	}
 
-	page := 1
-	accumulator := []map[string]string{}
-	return getRepoHelper(fmt.Sprintf(urlFormat, !gl.Opts.AllRepos, gl.Auth.Token, page), accumulator, func(item map[string]interface{}) map[string]string {
-		entry := make(map[string]string, 3)
-		url := item["web_url"].(string)
-		entry["url"] = url
-		entry["name"] = strings.Split(url, "://")[1]
-		entry["clone_url"] = item["http_url_to_repo"].(string)
-		entry["ssh_url"] = item["ssh_url_to_repo"].(string)
-		return entry
-	})
+	for {
+		projects, resp, err := gl.client.Projects.ListProjects(opts)
+		if err != nil {
+			return allRepos, err
+		}
+		allRepos, err = mapGitLabProjects(allRepos, projects)
+		if err != nil {
+			return allRepos, err
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allRepos, nil
+}
+
+func mapGitLabProjects(acc []map[string]string, projects []*gitlab.Project) ([]map[string]string, error) {
+	for _, p := range projects {
+		entry := make(map[string]string, 4)
+		entry["url"] = p.WebURL
+		entry["name"] = strings.Split(entry["url"], "://")[1]
+		entry["clone_url"] = p.HTTPURLToRepo
+		entry["ssh_url"] = p.SSHURLToRepo
+		acc = append(acc, entry)
+	}
+	return acc, nil
 }

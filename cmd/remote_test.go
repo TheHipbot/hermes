@@ -82,12 +82,6 @@ func (suite *RemoteCmdSuite) TestWithTokenAuth() {
 
 	promptForDriverThenSetHost(mockPrompter, mockSelectPrompt, suite.mockDriver, 2, "https://github.com")
 
-	suite.mockDriver.
-		EXPECT().
-		AuthType().
-		Return("token").
-		Times(1)
-
 	suite.mockCredentialStorer.
 		EXPECT().
 		Get("github.com").
@@ -189,12 +183,6 @@ func (suite *RemoteCmdSuite) TestAuthError() {
 		SearchRemote("github.com").
 		Return(nil, false).
 		Times(1)
-
-	suite.mockDriver.
-		EXPECT().
-		AuthType().
-		Return("token").
-		Times(2)
 
 	promptForDriverThenSetHost(mockPrompter, mockSelectPrompt, suite.mockDriver, 2, "https://github.com")
 
@@ -299,6 +287,7 @@ func (suite *RemoteCmdSuite) TestAuthError() {
 			EXPECT().
 			Authenticate(gomock.Eq(remote.Auth{
 				Token: "1234abcd",
+				Type:  "token",
 			})).
 			Times(1),
 	)
@@ -348,12 +337,6 @@ func (suite *RemoteCmdSuite) TestWithStoredTokenAuth() {
 
 	promptForDriverThenSetHost(mockPrompter, mockSelectPrompt, suite.mockDriver, 2, "https://github.com")
 
-	suite.mockDriver.
-		EXPECT().
-		AuthType().
-		Return("token").
-		Times(1)
-
 	suite.mockCredentialStorer.
 		EXPECT().
 		Get("github.com").
@@ -378,6 +361,7 @@ func (suite *RemoteCmdSuite) TestWithStoredTokenAuth() {
 		EXPECT().
 		Authenticate(gomock.Eq(remote.Auth{
 			Token: "1234abcd",
+			Type:  "token",
 		})).
 		Times(1)
 
@@ -478,12 +462,6 @@ func (suite *RemoteCmdSuite) TestRemoteAddWithAll() {
 	promptForDriverThenSetHost(mockPrompter, mockSelectPrompt, suite.mockDriver, 2, "https://github.com")
 
 	gomock.InOrder(
-		suite.mockDriver.
-			EXPECT().
-			AuthType().
-			Return("token").
-			Times(1),
-
 		suite.mockCredentialStorer.
 			EXPECT().
 			Get("github.com").
@@ -583,12 +561,6 @@ func (suite *RemoteCmdSuite) TestRemoteAddSSH() {
 		Times(1)
 
 	promptForDriverThenSetHost(mockPrompter, mockSelectPrompt, suite.mockDriver, 2, "https://github.com")
-
-	suite.mockDriver.
-		EXPECT().
-		AuthType().
-		Return("token").
-		Times(1)
 
 	suite.mockCredentialStorer.
 		EXPECT().
@@ -871,6 +843,7 @@ func promptForAuthThenStore(
 			EXPECT().
 			Authenticate(gomock.Eq(remote.Auth{
 				Token: "1234abcd",
+				Type:  "token",
 			})).
 			Times(1),
 	)
@@ -882,12 +855,6 @@ func getAuthFromStorer(
 	domain string) {
 
 	gomock.InOrder(
-		mockDriver.
-			EXPECT().
-			AuthType().
-			Return("token").
-			Times(1),
-
 		mockCredentialStorer.
 			EXPECT().
 			Get(domain).
@@ -901,6 +868,7 @@ func getAuthFromStorer(
 			EXPECT().
 			Authenticate(remote.Auth{
 				Token: "1234abcd",
+				Type:  "token",
 			}).
 			Return().
 			Times(1),

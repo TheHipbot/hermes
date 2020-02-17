@@ -17,7 +17,12 @@ func (s *DriverSuite) TestNewDriverOptions() {
 	}
 
 	for _, t := range expectedDrivers {
-		d, err := NewDriver(t, &DriverOpts{})
+		d, err := NewDriver(t, &DriverOpts{
+			Auth: &Auth{
+				Token: "abcd123",
+				Type:  "token",
+			},
+		})
 		s.Nil(err, "Driver should be create without error")
 		s.NotNil(d, "Driver should not be nil")
 	}
@@ -37,7 +42,7 @@ func (s *DriverSuite) TestRegisterDriver() {
 	RegisterDriver("test", gitlabCreator)
 	d, err = NewDriver("test", &DriverOpts{})
 	s.NotNil(d, "Driver should exist")
-	gl := d.(*Gitlab)
+	gl := d.(*GitLab)
 	s.NotNil(gl, "Should be a gitlab driver")
 }
 
