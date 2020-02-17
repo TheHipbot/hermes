@@ -61,7 +61,7 @@ func (gl *GitLab) GetRepos() ([]map[string]string, error) {
 	opts := &gitlab.ListProjectsOptions{
 		Membership: &membership,
 		ListOptions: gitlab.ListOptions{
-			PerPage: 10,
+			PerPage: 40,
 		},
 	}
 

@@ -68,7 +68,7 @@ func (gh *GitHub) GetRepos() ([]map[string]string, error) {
 	allRepos := []map[string]string{}
 	opts := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
-			PerPage: 10,
+			PerPage: 40,
 		},
 	}
 
