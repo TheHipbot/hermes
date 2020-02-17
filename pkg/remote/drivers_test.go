@@ -17,7 +17,12 @@ func (s *DriverSuite) TestNewDriverOptions() {
 	}
 
 	for _, t := range expectedDrivers {
-		d, err := NewDriver(t, &DriverOpts{})
+		d, err := NewDriver(t, &DriverOpts{
+			Auth: &Auth{
+				Token: "abcd123",
+				Type:  "token",
+			},
+		})
 		s.Nil(err, "Driver should be create without error")
 		s.NotNil(d, "Driver should not be nil")
 	}

@@ -1,9 +1,6 @@
 package remote
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -14,7 +11,12 @@ type GitHubRemoteSuite struct {
 }
 
 func (s *GitHubRemoteSuite) TestGitHubCreator() {
-	opts := &DriverOpts{}
+	opts := &DriverOpts{
+		Auth: &Auth{
+			Token: "abcd123",
+			Type:  "token",
+		},
+	}
 	d, err := githubCreator(opts)
 	s.Nil(err, "Should return without error")
 	s.IsType(d, &GitHub{}, "Driver should be GitHub type")
@@ -24,7 +26,13 @@ func (s *GitHubRemoteSuite) TestGitHubCreator() {
 }
 
 func (s *GitHubRemoteSuite) TestSetHost() {
-	d, err := githubCreator(&DriverOpts{})
+	opts := &DriverOpts{
+		Auth: &Auth{
+			Token: "abcd123",
+			Type:  "token",
+		},
+	}
+	d, err := githubCreator(opts)
 	s.Nil(err, "Creator should not return error")
 	gh := d.(*GitHub)
 	d.SetHost("http://test.github.com")
@@ -32,7 +40,13 @@ func (s *GitHubRemoteSuite) TestSetHost() {
 }
 
 func (s *GitHubRemoteSuite) TestSetHostToGithub() {
-	d, err := githubCreator(&DriverOpts{})
+	opts := &DriverOpts{
+		Auth: &Auth{
+			Token: "abcd123",
+			Type:  "token",
+		},
+	}
+	d, err := githubCreator(opts)
 	s.Nil(err, "Creator should not return error")
 	gh := d.(*GitHub)
 	d.SetHost("https://github.com")
@@ -42,7 +56,13 @@ func (s *GitHubRemoteSuite) TestSetHostToGithub() {
 }
 
 func (s *GitHubRemoteSuite) TestGitHubSetAuth() {
-	d, err := githubCreator(&DriverOpts{})
+	opts := &DriverOpts{
+		Auth: &Auth{
+			Token: "abcd123",
+			Type:  "token",
+		},
+	}
+	d, err := githubCreator(opts)
 	s.Nil(err, "Creator should not return error")
 	testAuth := Auth{
 		Token: "1234abc",
@@ -53,37 +73,15 @@ func (s *GitHubRemoteSuite) TestGitHubSetAuth() {
 }
 
 func (s *GitHubRemoteSuite) TestGitHubAuthType() {
-	d, err := githubCreator(&DriverOpts{})
+	opts := &DriverOpts{
+		Auth: &Auth{
+			Token: "abcd123",
+			Type:  "token",
+		},
+	}
+	d, err := githubCreator(opts)
 	s.Nil(err, "Creator should not return error")
 	s.Equal(authToken, d.AuthType(), "AuthType should be authToken")
-}
-
-func (s *GitHubRemoteSuite) TestGitHubGetRepos() {
-	reqNum := 0
-	testToken := "1234abcd"
-	testURL := ""
-	linkHeaders := []string{
-		`<%s/user/repos?access_token=%s&page=2>;rel="next", <%s/user/repos?access_token=%s&page=2>; rel="last"`,
-		`<%s/user/repos?access_token=%s&page=1>; rel="prev",<%s/user/repos?access_token=%s&page=1>; rel="first"`,
-	}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.Equal(testToken, r.URL.Query()["access_token"][0], "The requests should have the correct access token")
-		w.Header().Set("Link", fmt.Sprintf(linkHeaders[reqNum], testURL, testToken, testURL, testToken))
-		fmt.Fprintln(w, testResponses[reqNum])
-		reqNum++
-	}))
-	defer ts.Close()
-	testURL = ts.URL
-
-	gh := &GitHub{
-		Auth: Auth{
-			Token: testToken,
-		},
-		Host: ts.URL,
-	}
-	res, err := gh.GetRepos()
-	s.Nil(err, "No error should be returned")
-	s.Equal(testResult, res, "Results from GetRepos should match the mock responses")
 }
 
 func TestGitHubRemoteSuite(t *testing.T) {

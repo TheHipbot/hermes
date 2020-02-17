@@ -68,36 +68,34 @@ var remoteAddCmd = &cobra.Command{
 	Run:   remoteAddHandler,
 }
 
-func promptAndGetAuth(remoteURL *url.URL, driver remote.Driver) (remote.Auth, error) {
+func promptAndGetAuth(remoteURL *url.URL) (remote.Auth, error) {
 	remoteName := remoteURL.Hostname()
 	auth := remote.Auth{}
-	switch driver.AuthType() {
-	case "token":
-		if tokenFlg != "" {
-			credentialsStorer.Put(remoteName, credentials.Credential{
-				Type:  "token",
-				Token: tokenFlg,
-			})
-			auth.Token = tokenFlg
-		} else if cred, err := credentialsStorer.Get(remoteName); err != nil {
-			fmt.Println(err)
-			ip := prompt.CreateTokenInputPrompt(prompter)
-			// TODO: handle error here
-			// TODO: reprompt on failed auth
-			token, err := ip.Run()
-			if err != nil {
-				return remote.Auth{}, err
-			}
-			credentialsStorer.Put(remoteName, credentials.Credential{
-				Type:  "token",
-				Token: token,
-			})
-			auth.Token = token
-		} else {
-			auth.Token = cred.Token
+
+	if tokenFlg != "" {
+		credentialsStorer.Put(remoteName, credentials.Credential{
+			Type:  "token",
+			Token: tokenFlg,
+		})
+		auth.Token = tokenFlg
+	} else if cred, err := credentialsStorer.Get(remoteName); err != nil {
+		fmt.Println(err)
+		ip := prompt.CreateTokenInputPrompt(prompter)
+		// TODO: handle error here
+		// TODO: reprompt on failed auth
+		token, err := ip.Run()
+		if err != nil {
+			return remote.Auth{}, err
 		}
-	default:
+		credentialsStorer.Put(remoteName, credentials.Credential{
+			Type:  "token",
+			Token: token,
+		})
+		auth.Token = token
+	} else {
+		auth.Token = cred.Token
 	}
+	auth.Type = "token"
 	return auth, nil
 }
 
@@ -164,24 +162,26 @@ func addReposFromRemote(remoteStr string) error {
 			remoteType = drivers[i].Name
 		}
 	}
-	driver, err := remote.NewDriver(remoteType, &remote.DriverOpts{
-		AllRepos: getAllReposFlg,
-	})
 	if err != nil {
 		return err
 	}
-	driver.SetHost(remoteURL.String())
 
-	auth, err := promptAndGetAuth(remoteURL, driver)
+	auth, err := promptAndGetAuth(remoteURL)
 	if err != nil {
 		return errInput
 	}
+	driver, err := remote.NewDriver(remoteType, &remote.DriverOpts{
+		AllRepos: getAllReposFlg,
+		Auth:     &auth,
+		Host:     remoteURL.String(),
+	})
+	driver.SetHost(remoteURL.String())
 	driver.Authenticate(auth)
 	repos, err := driver.GetRepos()
 	for err == remote.ErrAuth {
 		fmt.Println("Authentication error received from remote")
 		credentialsStorer.Delete(remoteName)
-		auth, err = promptAndGetAuth(remoteURL, driver)
+		auth, err = promptAndGetAuth(remoteURL)
 		if err == nil {
 			driver.Authenticate(auth)
 			repos, err = driver.GetRepos()

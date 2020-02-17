@@ -1,9 +1,12 @@
 package remote
 
 import (
-	"fmt"
+	"context"
 	"regexp"
 	"strings"
+
+	"github.com/google/go-github/v29/github"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -13,17 +16,31 @@ var (
 )
 
 func githubCreator(opts *DriverOpts) (Driver, error) {
-	return &GitHub{
-		Host: defaultGitHubAPIHost,
-		Opts: opts,
-	}, nil
+	newDriver := &GitHub{}
+	if opts.Auth == nil {
+		return newDriver, ErrAuth
+	}
+	switch opts.Auth.Type {
+	case "token":
+		ctx := context.Background()
+		ts := oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: opts.Auth.Token,
+		})
+		tc := oauth2.NewClient(ctx, ts)
+		client := github.NewClient(tc)
+		newDriver.client = client
+	}
+	newDriver.Host = defaultGitHubAPIHost
+	newDriver.Opts = opts
+	return newDriver, nil
 }
 
 // GitHub is a client to github
 type GitHub struct {
 	Auth
-	Host string
-	Opts *DriverOpts
+	Host   string
+	Opts   *DriverOpts
+	client *github.Client
 }
 
 // SetHost sets github driver host to provided string
@@ -48,20 +65,39 @@ func (gh *GitHub) AuthType() string {
 
 // GetRepos gets the repos for the github user
 func (gh *GitHub) GetRepos() ([]map[string]string, error) {
-	urlFormat := fmt.Sprintf("%s%s", gh.Host, gitHubUserRequestFmt)
-	if gh.Auth.Token == "" && gh.Auth.Username == "" {
-		return nil, ErrAuth
+	allRepos := []map[string]string{}
+	opts := &github.RepositoryListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 10,
+		},
 	}
 
-	page := 1
-	accumulator := []map[string]string{}
-	return getRepoHelper(fmt.Sprintf(urlFormat, gh.Auth.Token, page), accumulator, func(item map[string]interface{}) map[string]string {
-		entry := make(map[string]string, 3)
-		url := item["html_url"].(string)
-		entry["url"] = url
-		entry["name"] = strings.Split(url, "://")[1]
-		entry["clone_url"] = item["clone_url"].(string)
-		entry["ssh_url"] = item["ssh_url"].(string)
-		return entry
-	})
+	for {
+		repos, resp, err := gh.client.Repositories.List(context.Background(), "", opts)
+		if err != nil {
+			return allRepos, err
+		}
+		allRepos, err = mapGitHubRepos(allRepos, repos)
+		if err != nil {
+			return allRepos, err
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allRepos, nil
+}
+
+func mapGitHubRepos(acc []map[string]string, repos []*github.Repository) ([]map[string]string, error) {
+	for _, r := range repos {
+		entry := make(map[string]string, 4)
+		entry["url"] = r.GetHTMLURL()
+		entry["name"] = strings.Split(entry["url"], "://")[1]
+		entry["clone_url"] = r.GetCloneURL()
+		entry["ssh_url"] = r.GetSSHURL()
+		acc = append(acc, entry)
+	}
+	return acc, nil
 }

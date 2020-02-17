@@ -18,12 +18,15 @@ type Auth struct {
 	Username string
 	Password string
 	Token    string
+	Type     string
 }
 
 // DriverOpts provide options for which repos to get
 type DriverOpts struct {
 	AllRepos bool
 	Starred  bool
+	Auth     *Auth
+	Host     string
 }
 
 var (
