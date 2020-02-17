@@ -18,9 +18,10 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.2.1
 	github.com/stretchr/objx v0.1.1 // indirect
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.4.0
+	github.com/xanzy/go-gitlab v0.26.0
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
-	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/tools v0.0.0-20181201035826-d0ca3933b724 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect

@@ -42,7 +42,7 @@ func (s *DriverSuite) TestRegisterDriver() {
 	RegisterDriver("test", gitlabCreator)
 	d, err = NewDriver("test", &DriverOpts{})
 	s.NotNil(d, "Driver should exist")
-	gl := d.(*Gitlab)
+	gl := d.(*GitLab)
 	s.NotNil(gl, "Should be a gitlab driver")
 }
 
