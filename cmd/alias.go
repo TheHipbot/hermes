@@ -41,18 +41,15 @@ func generateAlias() (string, error) {
 		AliasName:      viper.GetString("alias_name"),
 	}
 
-	aliasTemplate := `
-function {{ .AliasName }}() {
-	local HERMES_BIN="$(which hermes)"
+	aliasTemplate := `function {{ .AliasName }}() {
+	local HERMES_BIN=$(whereis hermes | awk -F: '{gsub(/ /, "", $2); print $2}' || which hermes)
 	$HERMES_BIN $@
 	local EXIT_STATUS=$?
 	if [ -f {{ .ConfigDir }}{{ .TargetFileName }} ]; then
 		cd $(cat {{ .ConfigDir }}{{ .TargetFileName }}) && rm {{ .ConfigDir }}{{ .TargetFileName }}
 	fi
 	return $EXIT_STATUS
-}
-	
-`
+}`
 
 	t, err := template.New("alias").Parse(aliasTemplate)
 	if err != nil {
