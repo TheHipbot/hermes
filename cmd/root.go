@@ -36,7 +36,6 @@ import (
 
 var (
 	cfgFile   string
-	aliasFlg  bool
 	appFs     billy.Filesystem
 	configFS  *fs.ConfigFS
 	store     storage.Storage
@@ -192,6 +191,9 @@ func init() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	viper.SetEnvPrefix("hermes")
+	viper.BindEnv("bin")
 
 	viper.SetDefault("repo_path", fmt.Sprintf("%s/hermes-repos/", home))
 	viper.SetDefault("config_path", fmt.Sprintf("%s/.hermes/", home))

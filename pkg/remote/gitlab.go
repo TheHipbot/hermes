@@ -17,13 +17,19 @@ func gitlabCreator(opts *DriverOpts) (Driver, error) {
 	if opts.Auth == nil {
 		return newDriver, ErrAuth
 	}
+	var client *gitlab.Client
+	var err error
 	switch opts.Auth.Type {
 	case "token":
-		client := gitlab.NewOAuthClient(nil, opts.Auth.Token)
+		if opts.Host != "" {
+			client, err = gitlab.NewClient(opts.Auth.Token, gitlab.WithBaseURL(opts.Host))
+		} else {
+			client, err = gitlab.NewClient(opts.Auth.Token)
+		}
+		if err != nil {
+			return newDriver, err
+		}
 		newDriver.client = client
-	}
-	if opts.Host != "" {
-		newDriver.client.SetBaseURL(opts.Host)
 	}
 	newDriver.Host = defaultGitlabAPIHost
 	newDriver.Opts = opts
@@ -41,7 +47,11 @@ type GitLab struct {
 // SetHost sets github driver host to provided string
 func (gl *GitLab) SetHost(host string) {
 	gl.Host = host
-	gl.client.SetBaseURL(host)
+	// Recreate client with new base URL
+	client, err := gitlab.NewClient(gl.Auth.Token, gitlab.WithBaseURL(host))
+	if err == nil {
+		gl.client = client
+	}
 }
 
 // Authenticate sets Auth object for driver

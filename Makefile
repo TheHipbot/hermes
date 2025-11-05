@@ -26,8 +26,7 @@ goos := darwin \
 		linux \
 		windows
 
-archs := 386 \
-		 amd64
+archs := amd64
 
 .DEFAULT_GOAL: $(BINARY)
 
@@ -41,7 +40,7 @@ lint:
 
 .PHONY: vet
 vet:
-	$(GOCMD) vet ./...
+	$(GOCMD) vet -tags gogit ./...
 
 .PHONY: install
 install: 
@@ -56,7 +55,7 @@ generate:
 
 .PHONY: test
 test: 
-	go test -tags gogit ./...
+	go test -v -tags gogit ./...
 
 cross-compile: all-archs
 

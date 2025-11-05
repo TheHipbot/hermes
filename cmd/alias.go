@@ -31,6 +31,7 @@ type AliasData struct {
 	ConfigDir      string
 	TargetFileName string
 	AliasName      string
+	BinPath        string
 }
 
 func generateAlias() (string, error) {
@@ -39,10 +40,15 @@ func generateAlias() (string, error) {
 		ConfigDir:      viper.GetString("config_path"),
 		TargetFileName: viper.GetString("target_file"),
 		AliasName:      viper.GetString("alias_name"),
+		BinPath:        viper.GetString("bin"),
 	}
 
 	aliasTemplate := `function {{ .AliasName }}() {
-	local HERMES_BIN=$(whereis hermes | awk -F: '{gsub(/ /, "", $2); print $2}' || which hermes)
+	{{ if .BinPath }}
+	local HERMES_BIN={{ .BinPath }}
+	{{ else }}
+	local HERMES_BIN=$(whereis hermes | awk -F' ' '{ print $2 }' || which hermes)
+	{{ end }}
 	$HERMES_BIN $@
 	local EXIT_STATUS=$?
 	if [ -f {{ .ConfigDir }}{{ .TargetFileName }} ]; then

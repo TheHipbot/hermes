@@ -2,7 +2,6 @@ package osfs
 
 import (
 	"io"
-	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 
@@ -30,10 +29,13 @@ func NewFSStorer(storer storer) *Storage {
 }
 
 func (s *Storage) open() (map[string]credentials.Credential, error) {
-	_, err := s.storer.Seek(0, 0)
-	raw, err := ioutil.ReadAll(s.storer)
-
 	var result map[string]credentials.Credential
+
+	if _, err := s.storer.Seek(0, 0); err != nil {
+		return result, err
+	}
+
+	raw, err := io.ReadAll(s.storer)
 	if err != nil {
 		return result, err
 	}
@@ -51,16 +53,16 @@ func (s *Storage) save(creds map[string]credentials.Credential) error {
 		return err
 	}
 
-	_, err = s.storer.Seek(0, 0)
-	if err != nil {
+	if _, err = s.storer.Seek(0, 0); err != nil {
 		return err
 	}
+
 	p, err := s.storer.Write(raw)
 	if err != nil {
 		return err
 	}
-	s.storer.Truncate(int64(p))
-	if err != nil {
+
+	if err := s.storer.Truncate(int64(p)); err != nil {
 		return err
 	}
 	_, err = s.storer.Seek(0, 0)

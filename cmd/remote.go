@@ -21,10 +21,10 @@ type driver struct {
 
 var (
 	drivers = []driver{
-		driver{
+		{
 			Name: "github",
 		},
-		driver{
+		{
 			Name: "gitlab",
 		},
 	}
